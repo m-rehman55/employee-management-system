@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Leave Request — Apex EMS{% endblock %}
+{% block page_title %}{{ action }} Leave Request{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold fs-5">
+                    <i class="bi bi-calendar-{% if action == 'Add' %}plus{% else %}check{% endif %} me-2 text-primary"></i>
+                    {{ action }} Leave Application
+                </span>
+                <a href="{{ url_for('leaves.list_leaves') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Cancel
+                </a>
+            </div>
+
+            <div class="card-body p-4">
+                <form method="POST" action="{% if action == 'Add' %}{{ url_for('leaves.add') }}{% else %}{{ url_for('leaves.edit', id=leave.id) }}{% endif %}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Employee <span class="text-danger">*</span></label>
+                            {% if action == 'Add' %}
+                                <select name="employee_id" class="form-select" required>
+                                    <option value="">-- Select Employee --</option>
+                                    {% set cur_emp = form_data.employee_id or '' %}
+                                    {% for emp in employees %}
+                                        <option value="{{ emp.id }}" {% if cur_emp == emp.id|string %}selected{% endif %}>
+                                            {{ emp.full_name }} ({{ emp.employee_code }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <input type="text" class="form-control" value="{{ leave.employee.full_name }} ({{ leave.employee.employee_code }})" readonly>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Leave Category <span class="text-danger">*</span></label>
+                            {% if action == 'Add' %}
+                                <select name="leave_type_id" class="form-select" required>
+                                    <option value="">-- Select Category --</option>
+                                    {% set cur_lt = form_data.leave_type_id or '' %}
+                                    {% for lt in leave_types %}
+                                        <option value="{{ lt.id }}" {% if cur_lt == lt.id|string %}selected{% endif %}>
+                                            {{ lt.name }} ({{ lt.code }}) &bull; {{ lt.default_days_per_year }} days/yr
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <input type="text" class="form-control" value="{{ leave.leave_type.name }} ({{ leave.leave_type.code }})" readonly>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" name="start_date" class="form-control"
+                                   value="{{ form_data.start_date or (leave.start_date.strftime('%Y-%m-%d') if leave and leave.start_date else '') }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">End Date <span class="text-danger">*</span></label>
+                            <input type="date" name="end_date" class="form-control"
+                                   value="{{ form_data.end_date or (leave.end_date.strftime('%Y-%m-%d') if leave and leave.end_date else '') }}" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Reason for Absence <span class="text-danger">*</span></label>
+                            <textarea name="reason" class="form-control" rows="3" placeholder="Provide detailed operational reason for leave request" required>{{ form_data.reason or (leave.reason if leave else '') }}</textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Application Status</label>
+                            {% set cur_status = form_data.status or (leave.status if leave else 'Pending') %}
+                            <select name="status" class="form-select">
+                                <option value="Pending" {% if cur_status == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Approved" {% if cur_status == 'Approved' %}selected{% endif %}>Approved</option>
+                                <option value="Rejected" {% if cur_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+
+                        {% if action == 'Edit' %}
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Supervisor Remarks</label>
+                            <input type="text" name="remarks" class="form-control" placeholder="Comments or condition of approval">
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
+                        <a href="{{ url_for('leaves.list_leaves') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-check-circle me-1"></i>Save Leave Record
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

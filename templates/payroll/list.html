@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll — Payslips Directory{% endblock %}
+{% block page_title %}Payroll Management{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <form method="GET" action="{{ url_for('payroll.list_payroll') }}" class="d-flex flex-wrap align-items-center gap-2">
+                <select name="period_id" class="form-select" style="min-width: 220px;" onchange="this.form.submit()">
+                    <option value="">All Payroll Cycles</option>
+                    {% for p in periods %}
+                        <option value="{{ p.id }}" {% if selected_period_id == p.id|string %}selected{% endif %}>
+                            {{ p.period_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <select name="status" class="form-select" style="min-width: 160px;" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="Paid" {% if selected_status == 'Paid' %}selected{% endif %}>Paid</option>
+                    <option value="Unpaid" {% if selected_status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+                    <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+                </select>
+
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                {% if selected_period_id or selected_status %}
+                    <a href="{{ url_for('payroll.list_payroll') }}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </form>
+
+            <a href="{{ url_for('payroll.add') }}" class="btn btn-primary fw-semibold">
+                <i class="bi bi-receipt me-1"></i>Generate New Payslip
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="bi bi-cash-stack text-primary me-2"></i>Issued Payslips ({{ records|length }})</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Slip #</th>
+                    <th>Employee Name</th>
+                    <th>Payroll Cycle</th>
+                    <th>Basic Pay</th>
+                    <th>Allowances</th>
+                    <th>Gross Pay</th>
+                    <th>Deductions</th>
+                    <th>Net Salary</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td><span class="badge bg-light text-dark border">#{{ r.id }}</span></td>
+                    <td>
+                        <div class="fw-bold">{{ r.employee.full_name if r.employee else 'Unknown' }}</div>
+                        <div class="small text-muted">{{ r.employee.employee_code if r.employee else '' }}</div>
+                    </td>
+                    <td>
+                        <div class="small fw-semibold">{{ r.period.period_name if r.period else 'Period' }}</div>
+                    </td>
+                    <td>Rs. {{ "{:,.0f}".format(r.basic_salary) }}</td>
+                    <td class="text-success">+ Rs. {{ "{:,.0f}".format(r.total_allowances) }}</td>
+                    <td class="fw-semibold">Rs. {{ "{:,.0f}".format(r.gross_salary) }}</td>
+                    <td class="text-danger">- Rs. {{ "{:,.0f}".format(r.total_deductions) }}</td>
+                    <td>
+                        <span class="fw-bold text-primary fs-6">Rs. {{ "{:,.0f}".format(r.net_salary) }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if r.payment_status == 'Paid' %}badge-paid{% elif r.payment_status == 'Unpaid' %}badge-rejected{% else %}badge-pending{% endif %}">
+                            {{ r.payment_status }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('payroll.detail', id=r.id) }}" class="btn btn-light border" title="View Payslip">
+                                <i class="bi bi-printer"></i>
+                            </a>
+                            <a href="{{ url_for('payroll.edit', id=r.id) }}" class="btn btn-light border" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('payroll.delete', id=r.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-light border text-danger" title="Delete"
+                                        data-confirm-delete data-item-name="Payslip #{{ r.id }} for {{ r.employee.full_name if r.employee else 'Employee' }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-5 text-muted">
+                        <i class="bi bi-cash-coin display-4 d-block mb-3 text-secondary"></i>
+                        <h5>No payslips found</h5>
+                        <p class="small">Generate a payslip for an employee's monthly wage cycle.</p>
+                        <a href="{{ url_for('payroll.add') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Generate Payslip</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

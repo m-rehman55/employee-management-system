@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Department — Apex EMS{% endblock %}
+{% block page_title %}{{ action }} Department{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold fs-5">
+                    <i class="bi bi-diagram-3 me-2 text-primary"></i>{{ action }} Department
+                </span>
+                <a href="{{ url_for('departments.list_departments') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Cancel
+                </a>
+            </div>
+
+            <div class="card-body p-4">
+                <form method="POST" action="{% if action == 'Add' %}{{ url_for('departments.add') }}{% else %}{{ url_for('departments.edit', id=department.id) }}{% endif %}">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Department Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code" class="form-control" placeholder="e.g. DEPT-QA"
+                                   value="{{ form_data.code or (department.code if department else '') }}"
+                                   {% if action == 'Edit' %}readonly{% endif %} required>
+                            <div class="form-text small">Unique organizational identifier.</div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Department Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Quality Assurance & Testing"
+                                   value="{{ form_data.name or (department.name if department else '') }}" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Description</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Outline organizational mandate and responsibilities">{{ form_data.description or (department.description if department else '') }}</textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Department Manager / Head</label>
+                            <select name="manager_id" class="form-select">
+                                <option value="">-- Select Manager --</option>
+                                {% set cur_mgr = form_data.manager_id or (department.manager_id|string if department and department.manager_id else '') %}
+                                {% for emp in employees %}
+                                    <option value="{{ emp.id }}" {% if cur_mgr == emp.id|string %}selected{% endif %}>
+                                        {{ emp.full_name }} ({{ emp.employee_code }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Office Location / Branch</label>
+                            <select name="location_id" class="form-select">
+                                <option value="">-- Select Branch Location --</option>
+                                {% set cur_loc = form_data.location_id or (department.location_id|string if department and department.location_id else '') %}
+                                {% for loc in locations %}
+                                    <option value="{{ loc.id }}" {% if cur_loc == loc.id|string %}selected{% endif %}>
+                                        {{ loc.name }} &bull; {{ loc.city }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Annual Fiscal Budget (PKR)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rs.</span>
+                                <input type="number" step="0.01" min="0" name="budget" class="form-control"
+                                       value="{{ form_data.budget or (department.budget if department else '0') }}">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div class="form-check mt-3">
+                                {% set active_state = form_data.is_active or (department.is_active if department else True) %}
+                                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if active_state %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="is_active">
+                                    Active Department
+                                </label>
+                                <div class="form-text small">Deactivating prevents new employee assignments.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
+                        <a href="{{ url_for('departments.list_departments') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-check-circle me-1"></i>Save Department
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

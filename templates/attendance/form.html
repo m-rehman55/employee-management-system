@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Attendance Record — Apex EMS{% endblock %}
+{% block page_title %}{{ action }} Attendance Record{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold fs-5">
+                    <i class="bi bi-clock-{% if action == 'Add' %}history{% else %}fill{% endif %} me-2 text-primary"></i>
+                    {{ action }} Daily Attendance
+                </span>
+                <a href="{{ url_for('attendance.list_attendance') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Cancel
+                </a>
+            </div>
+
+            <div class="card-body p-4">
+                <form method="POST" action="{% if action == 'Add' %}{{ url_for('attendance.add') }}{% else %}{{ url_for('attendance.edit', id=record.id) }}{% endif %}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Employee <span class="text-danger">*</span></label>
+                            {% if action == 'Add' %}
+                                <select name="employee_id" class="form-select" required>
+                                    <option value="">-- Select Employee --</option>
+                                    {% set cur_emp = form_data.employee_id or '' %}
+                                    {% for emp in employees %}
+                                        <option value="{{ emp.id }}" {% if cur_emp == emp.id|string %}selected{% endif %}>
+                                            {{ emp.full_name }} ({{ emp.employee_code }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <input type="text" class="form-control" value="{{ record.employee.full_name }} ({{ record.employee.employee_code }})" readonly>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Shift Schedule</label>
+                            <select name="shift_id" class="form-select">
+                                <option value="">-- Default Shift --</option>
+                                {% set cur_shift = form_data.shift_id or (record.shift_id|string if record and record.shift_id else '') %}
+                                {% for s in shifts %}
+                                    <option value="{{ s.id }}" {% if cur_shift == s.id|string %}selected{% endif %}>
+                                        {{ s.shift_name }} ({{ s.start_time.strftime('%I:%M %p') }} - {{ s.end_time.strftime('%I:%M %p') }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Work Date <span class="text-danger">*</span></label>
+                            <input type="date" name="work_date" class="form-control"
+                                   value="{{ form_data.work_date or (record.work_date.strftime('%Y-%m-%d') if record and record.work_date else '') }}"
+                                   {% if action == 'Edit' %}readonly{% endif %} required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Check-in Time (HH:MM)</label>
+                            <input type="time" name="check_in_time" class="form-control"
+                                   value="{{ form_data.check_in_time or (record.check_in_time.strftime('%H:%M') if record and record.check_in_time else '09:00') }}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Check-out Time (HH:MM)</label>
+                            <input type="time" name="check_out_time" class="form-control"
+                                   value="{{ form_data.check_out_time or (record.check_out_time.strftime('%H:%M') if record and record.check_out_time else '17:00') }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Attendance Status</label>
+                            {% set cur_status = form_data.status or (record.status if record else 'Present') %}
+                            <select name="status" class="form-select">
+                                <option value="Present" {% if cur_status == 'Present' %}selected{% endif %}>Present</option>
+                                <option value="Late" {% if cur_status == 'Late' %}selected{% endif %}>Late</option>
+                                <option value="Half-Day" {% if cur_status == 'Half-Day' %}selected{% endif %}>Half-Day</option>
+                                <option value="Absent" {% if cur_status == 'Absent' %}selected{% endif %}>Absent</option>
+                                <option value="On-Leave" {% if cur_status == 'On-Leave' %}selected{% endif %}>On-Leave</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Remarks / Notes</label>
+                            <input type="text" name="notes" class="form-control" placeholder="Biometric verified, off-site meeting, etc."
+                                   value="{{ form_data.notes or (record.notes if record else '') }}">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
+                        <a href="{{ url_for('attendance.list_attendance') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-check-circle me-1"></i>Save Attendance Log
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

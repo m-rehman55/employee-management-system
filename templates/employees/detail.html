@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}{{ employee.full_name }} — Employee Profile{% endblock %}
+{% block page_title %}Employee Profile{% endblock %}
+
+{% block content %}
+<!-- Header Profile Summary Card -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold fs-2" style="width: 72px; height: 72px;">
+                    {{ employee.first_name[0] }}{{ employee.last_name[0] }}
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h3 class="fw-bold mb-0">{{ employee.full_name }}</h3>
+                        <span class="badge {% if employee.status == 'Active' %}badge-active{% else %}badge-rejected{% endif %} fs-6">
+                            {{ employee.status }}
+                        </span>
+                    </div>
+                    <div class="text-muted mt-1">
+                        <span class="badge bg-light text-dark border me-2">{{ employee.employee_code }}</span>
+                        <span>{{ employee.designation.title if employee.designation else 'No Designation' }}</span>
+                        &bull;
+                        <span class="fw-semibold text-primary">{{ employee.department.name if employee.department else 'Unassigned' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('employees.edit', id=employee.id) }}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-1"></i>Edit Profile
+                </a>
+                <form method="POST" action="{{ url_for('employees.delete', id=employee.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-outline-danger" data-confirm-delete data-item-name="{{ employee.full_name }}">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                </form>
+                <a href="{{ url_for('employees.list_employees') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Information Grid -->
+<div class="row g-4">
+    <!-- Left Column: Personal, Bio, Emergency Contacts -->
+    <div class="col-lg-4">
+        <!-- Personal Details Card -->
+        <div class="card mb-4">
+            <div class="card-header fw-bold"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Personal Details</div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted" style="width: 40%;">Email:</td>
+                        <td class="fw-semibold text-break">{{ employee.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Phone:</td>
+                        <td class="fw-semibold">{{ employee.phone }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Date of Birth:</td>
+                        <td>{{ employee.date_of_birth.strftime('%b %d, %Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Gender:</td>
+                        <td>{{ employee.gender }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Hire Date:</td>
+                        <td>{{ employee.hire_date.strftime('%b %d, %Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Employment:</td>
+                        <td>{{ employee.employment_type }}</td>
+                    </tr>
+                    {% if employee.profile %}
+                    <tr>
+                        <td class="text-muted">National ID:</td>
+                        <td><code>{{ employee.profile.national_id or '—' }}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Blood Group:</td>
+                        <td><span class="badge bg-danger">{{ employee.profile.blood_group or '—' }}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Address:</td>
+                        <td>{{ employee.profile.current_address or '—' }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Emergency Contacts Card -->
+        <div class="card mb-4">
+            <div class="card-header fw-bold"><i class="bi bi-shield-exclamation me-2 text-danger"></i>Emergency Contact</div>
+            <div class="card-body">
+                {% for ec in employee.emergency_contacts %}
+                    <div class="p-2 border rounded mb-2 bg-light">
+                        <div class="fw-bold">{{ ec.contact_name }} <span class="badge bg-secondary ms-1">{{ ec.relationship }}</span></div>
+                        <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ ec.phone_number }}</div>
+                    </div>
+                {% else %}
+                    <div class="text-muted small">No emergency contacts listed.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Bank Details Card -->
+        <div class="card">
+            <div class="card-header fw-bold"><i class="bi bi-bank me-2 text-success"></i>Disbursement Banking</div>
+            <div class="card-body">
+                {% for b in employee.bank_details %}
+                    <div class="p-2 border rounded mb-2">
+                        <div class="fw-bold text-success">{{ b.bank_name }}</div>
+                        <div class="small">Account: <code>{{ b.account_number }}</code></div>
+                        <div class="small text-muted">Title: {{ b.account_holder_name }}</div>
+                    </div>
+                {% else %}
+                    <div class="text-muted small">No bank account registered.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Skills, Asset Assignments, Academic Background, Work History -->
+    <div class="col-lg-8">
+        <!-- Skills Matrix -->
+        <div class="card mb-4">
+            <div class="card-header fw-bold"><i class="bi bi-award me-2 text-warning"></i>Skills & Competencies</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    {% for s in employee.skills %}
+                        <span class="badge bg-light text-dark border p-2">
+                            <strong>{{ s.skill_name }}</strong> &bull; <span class="text-muted">{{ s.proficiency_level }} ({{ s.years_experience }} yrs)</span>
+                        </span>
+                    {% else %}
+                        <span class="text-muted small">No specialized skills recorded.</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Assigned Company Assets -->
+        <div class="card mb-4">
+            <div class="card-header fw-bold"><i class="bi bi-laptop me-2 text-info"></i>Assigned Hardware & Assets</div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Asset Name</th>
+                            <th>Tag</th>
+                            <th>Issued Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in employee.assets %}
+                        <tr>
+                            <td class="fw-semibold">{{ a.asset_name }}</td>
+                            <td><code>{{ a.asset_tag }}</code></td>
+                            <td>{{ a.issued_date.strftime('%b %d, %Y') }}</td>
+                            <td><span class="badge bg-success">{{ a.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-muted text-center py-3 small">No hardware assets currently assigned.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Education Credentials -->
+        <div class="card mb-4">
+            <div class="card-header fw-bold"><i class="bi bi-mortarboard me-2 text-primary"></i>Education Credentials</div>
+            <div class="card-body">
+                {% for edu in employee.education %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <div>
+                            <div class="fw-bold">{{ edu.degree_title }}</div>
+                            <div class="small text-muted">{{ edu.institution }} &bull; {{ edu.field_of_study }}</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-secondary">{{ edu.graduation_year }}</span>
+                            <div class="small text-muted">GPA: {{ edu.grade_or_gpa or 'N/A' }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-muted small">No educational records logged.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Prior Employment Experience -->
+        <div class="card">
+            <div class="card-header fw-bold"><i class="bi bi-briefcase me-2 text-secondary"></i>Prior Employment History</div>
+            <div class="card-body">
+                {% for exp in employee.experience %}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <div class="fw-bold">{{ exp.job_title }} at <span class="text-primary">{{ exp.company_name }}</span></div>
+                        <div class="small text-muted mb-1">{{ exp.start_date.strftime('%b %Y') }} &ndash; {{ exp.end_date.strftime('%b %Y') if exp.end_date else 'Present' }}</div>
+                        <div class="small">{{ exp.responsibilities }}</div>
+                    </div>
+                {% else %}
+                    <div class="text-muted small">No previous work history registered.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

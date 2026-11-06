@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance — Daily Logs{% endblock %}
+{% block page_title %}Attendance Management{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <form method="GET" action="{{ url_for('attendance.list_attendance') }}" class="d-flex flex-wrap align-items-center gap-2">
+                <div class="input-group" style="min-width: 200px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-calendar3"></i></span>
+                    <input type="date" name="date" class="form-control" value="{{ selected_date }}" onchange="this.form.submit()">
+                </div>
+
+                <select name="emp_id" class="form-select" style="min-width: 220px;" onchange="this.form.submit()">
+                    <option value="">All Employees</option>
+                    {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if selected_emp_id == emp.id|string %}selected{% endif %}>
+                            {{ emp.full_name }} ({{ emp.employee_code }})
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                {% if selected_date or selected_emp_id %}
+                    <a href="{{ url_for('attendance.list_attendance') }}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </form>
+
+            <a href="{{ url_for('attendance.add') }}" class="btn btn-primary fw-semibold">
+                <i class="bi bi-clock me-1"></i>Record Daily Attendance
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="bi bi-clock-history text-primary me-2"></i>Attendance Punch Records ({{ records|length }})</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Employee Name</th>
+                    <th>Assigned Shift</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Logged Hours</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{ r.work_date.strftime('%b %d, %Y') }}</div>
+                        <div class="small text-muted">{{ r.work_date.strftime('%A') }}</div>
+                    </td>
+                    <td>
+                        <div class="fw-semibold">{{ r.employee.full_name if r.employee else 'Unknown' }}</div>
+                        <div class="small text-muted">{{ r.employee.employee_code if r.employee else '' }}</div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border">{{ r.shift.shift_name if r.shift else 'Default' }}</span>
+                    </td>
+                    <td>
+                        {% if r.check_in_time %}
+                            <span class="text-success fw-bold"><i class="bi bi-box-arrow-in-right me-1"></i>{{ r.check_in_time.strftime('%I:%M %p') }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if r.check_out_time %}
+                            <span class="text-danger fw-bold"><i class="bi bi-box-arrow-right me-1"></i>{{ r.check_out_time.strftime('%I:%M %p') }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ r.total_work_hours }}</strong> hrs</td>
+                    <td>
+                        <span class="badge {% if r.status == 'Present' %}badge-active{% elif r.status == 'Late' %}badge-pending{% elif r.status == 'Half-Day' %}badge-approved{% else %}badge-rejected{% endif %}">
+                            {{ r.status }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('attendance.detail', id=r.id) }}" class="btn btn-light border" title="View Punch Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('attendance.edit', id=r.id) }}" class="btn btn-light border" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('attendance.delete', id=r.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-light border text-danger" title="Delete"
+                                        data-confirm-delete data-item-name="Attendance for {{ r.employee.full_name if r.employee else 'Employee' }} on {{ r.work_date }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="bi bi-clock display-4 d-block mb-3 text-secondary"></i>
+                        <h5>No attendance logs found</h5>
+                        <p class="small">Add an attendance punch entry for an employee.</p>
+                        <a href="{{ url_for('attendance.add') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Record Attendance</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

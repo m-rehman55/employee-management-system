@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Departments — Overview{% endblock %}
+{% block page_title %}Department Management{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <form method="GET" action="{{ url_for('departments.list_departments') }}" class="d-flex align-items-center gap-2">
+                <div class="input-group" style="min-width: 280px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search department name or code..." value="{{ search }}">
+                </div>
+                <button type="submit" class="btn btn-secondary">Search</button>
+                {% if search %}
+                    <a href="{{ url_for('departments.list_departments') }}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </form>
+
+            <a href="{{ url_for('departments.add') }}" class="btn btn-primary fw-semibold">
+                <i class="bi bi-plus-circle me-1"></i>Add New Department
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="bi bi-diagram-3-fill text-primary me-2"></i>Institutional Departments ({{ departments|length }})</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Department Name</th>
+                    <th>Location</th>
+                    <th>Department Head / Manager</th>
+                    <th>Fiscal Budget</th>
+                    <th>Members</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dept in departments %}
+                <tr>
+                    <td><span class="badge bg-primary fs-6">{{ dept.code }}</span></td>
+                    <td>
+                        <div class="fw-bold">{{ dept.name }}</div>
+                        <div class="small text-muted text-truncate" style="max-width: 260px;">{{ dept.description or 'No description' }}</div>
+                    </td>
+                    <td>{{ dept.location.name if dept.location else 'Not Specified' }}</td>
+                    <td>
+                        {% if dept.manager %}
+                            <div class="fw-semibold">{{ dept.manager.full_name }}</div>
+                            <div class="small text-muted">{{ dept.manager.email }}</div>
+                        {% else %}
+                            <span class="text-muted fst-italic">Unassigned</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-bold text-secondary">Rs. {{ "{:,.0f}".format(dept.budget) }}</td>
+                    <td>
+                        <span class="badge bg-secondary-subtle text-secondary px-3 py-2 fw-semibold">
+                            <i class="bi bi-people-fill me-1"></i>{{ dept.employees|length }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if dept.is_active %}badge-active{% else %}badge-rejected{% endif %}">
+                            {{ 'Active' if dept.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('departments.detail', id=dept.id) }}" class="btn btn-light border" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('departments.edit', id=dept.id) }}" class="btn btn-light border" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('departments.delete', id=dept.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-light border text-danger" title="Delete"
+                                        data-confirm-delete data-item-name="{{ dept.name }} ({{ dept.code }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="bi bi-diagram-3 display-4 d-block mb-3 text-secondary"></i>
+                        <h5>No department records found</h5>
+                        <p class="small">Add a new department to organize employees.</p>
+                        <a href="{{ url_for('departments.add') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Add Department</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

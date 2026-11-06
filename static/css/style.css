@@ -1,0 +1,204 @@
+/* static/css/style.css - Professional styling for Employee Management System */
+
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary-color: #475569;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #06b6d4;
+    --bg-light: #f8fafc;
+    --sidebar-bg: #0f172a;
+    --sidebar-hover: #1e293b;
+    --sidebar-text: #94a3b8;
+    --sidebar-active-text: #ffffff;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-light);
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    min-height: 100vh;
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.sidebar .brand {
+    padding: 1.5rem 1.25rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar .nav-link {
+    color: var(--sidebar-text);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    margin: 0.2rem 0.75rem;
+    transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    color: var(--sidebar-active-text);
+    background-color: var(--sidebar-hover);
+}
+
+.sidebar .nav-link.active {
+    color: #ffffff;
+    background-color: var(--primary-color);
+}
+
+.sidebar .nav-link i {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+
+/* Main Content Area */
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Top Navbar */
+.top-navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.75rem 1.5rem;
+}
+
+/* Modern Card Styling */
+.card {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+    border-top-left-radius: 0.75rem !important;
+    border-top-right-radius: 0.75rem !important;
+}
+
+/* Dashboard Metric Cards */
+.metric-card {
+    border-left: 4px solid var(--primary-color);
+}
+.metric-card.success { border-left-color: var(--success-color); }
+.metric-card.warning { border-left-color: var(--warning-color); }
+.metric-card.danger { border-left-color: var(--danger-color); }
+.metric-card.info { border-left-color: var(--info-color); }
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+/* Table Styling */
+.table thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.75rem 1rem;
+}
+
+.table tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.92rem;
+}
+
+/* Status Badges */
+.badge-active { background-color: #dcfce7; color: #166534; font-weight: 600; }
+.badge-pending { background-color: #fef3c7; color: #92400e; font-weight: 600; }
+.badge-rejected { background-color: #fee2e2; color: #991b1b; font-weight: 600; }
+.badge-approved { background-color: #e0f2fe; color: #075985; font-weight: 600; }
+.badge-paid { background-color: #d1fae5; color: #065f46; font-weight: 600; }
+
+/* Payslip specific formatting */
+.payslip-container {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    padding: 2.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+@media print {
+    .sidebar, .top-navbar, .no-print {
+        display: none !important;
+    }
+    .payslip-container {
+        border: none;
+        padding: 0;
+        width: 100%;
+    }
+}
+
+/* Dark mode theme override */
+body.theme-dark {
+    background-color: #0b1120;
+    color: #f1f5f9;
+}
+
+body.theme-dark .top-navbar,
+body.theme-dark .card,
+body.theme-dark .card-header,
+body.theme-dark .payslip-container {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+body.theme-dark .table thead th {
+    background-color: #0f172a;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+body.theme-dark .table tbody td {
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+body.theme-dark .metric-value {
+    color: #f8fafc;
+}
+

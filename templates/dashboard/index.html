@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Overview{% endblock %}
+{% block page_title %}Executive Dashboard{% endblock %}
+
+{% block content %}
+<!-- Executive Metrics Cards Row -->
+<div class="row g-3 mb-4">
+    <!-- Employees Metric -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card metric-card h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Employees</div>
+                    <div class="metric-value mt-1">{{ total_employees }}</div>
+                    <div class="small text-success mt-1"><i class="bi bi-person-check-fill me-1"></i>{{ active_employees }} Active</div>
+                </div>
+                <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-3">
+                    <i class="bi bi-people-fill fs-3"></i>
+                </div>
+            </div>
+            <a href="{{ url_for('employees.list_employees') }}" class="stretched-link"></a>
+        </div>
+    </div>
+
+    <!-- Departments Metric -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card metric-card info h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Departments</div>
+                    <div class="metric-value mt-1">{{ total_departments }}</div>
+                    <div class="small text-muted mt-1"><i class="bi bi-geo-alt-fill me-1"></i>Corporate Units</div>
+                </div>
+                <div class="p-3 bg-info bg-opacity-10 text-info rounded-3">
+                    <i class="bi bi-diagram-3-fill fs-3"></i>
+                </div>
+            </div>
+            <a href="{{ url_for('departments.list_departments') }}" class="stretched-link"></a>
+        </div>
+    </div>
+
+    <!-- Leaves Metric -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card metric-card warning h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Pending Leaves</div>
+                    <div class="metric-value mt-1">{{ pending_leaves }}</div>
+                    <div class="small text-warning mt-1"><i class="bi bi-hourglass-split me-1"></i>Requires Action</div>
+                </div>
+                <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-3">
+                    <i class="bi bi-calendar-event-fill fs-3"></i>
+                </div>
+            </div>
+            <a href="{{ url_for('leaves.list_leaves', status='Pending') }}" class="stretched-link"></a>
+        </div>
+    </div>
+
+    <!-- Payroll Disbursed Metric -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card metric-card success h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="metric-label">Monthly Payroll</div>
+                    <div class="metric-value mt-1">Rs. {{ "{:,.0f}".format(total_payroll_disbursed) }}</div>
+                    <div class="small text-muted mt-1">{{ latest_period.period_name if latest_period else 'Cycle' }}</div>
+                </div>
+                <div class="p-3 bg-success bg-opacity-10 text-success rounded-3">
+                    <i class="bi bi-cash-coin fs-3"></i>
+                </div>
+            </div>
+            <a href="{{ url_for('payroll.list_payroll') }}" class="stretched-link"></a>
+        </div>
+    </div>
+</div>
+
+<!-- Architecture & Quick Actions Banner -->
+<div class="card mb-4 bg-primary text-white border-0 shadow-sm">
+    <div class="card-body p-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <div class="badge bg-white text-primary mb-2 px-3 py-2 fw-bold">
+                <i class="bi bi-database-check me-1"></i> {{ total_db_models }} Verified SQLAlchemy Database Models
+            </div>
+            <h4 class="fw-bold mb-1">Apex Enterprise Employee Management System</h4>
+            <p class="mb-0 text-white-50">5 Core University Modules: Employee &bull; Department &bull; Leave &bull; Attendance &bull; Payroll</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('employees.add') }}" class="btn btn-light text-primary fw-semibold"><i class="bi bi-person-plus-fill me-1"></i>New Employee</a>
+            <a href="{{ url_for('leaves.add') }}" class="btn btn-outline-light fw-semibold"><i class="bi bi-calendar-plus me-1"></i>Apply Leave</a>
+            <a href="{{ url_for('attendance.add') }}" class="btn btn-outline-light fw-semibold"><i class="bi bi-clock me-1"></i>Mark Attendance</a>
+            <a href="{{ url_for('payroll.add') }}" class="btn btn-outline-light fw-semibold"><i class="bi bi-receipt me-1"></i>Generate Payslip</a>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard Grid -->
+<div class="row g-4">
+    <!-- Recent Employees Table -->
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-people me-2 text-primary"></i>Recently Onboarded Employees</span>
+                <a href="{{ url_for('employees.list_employees') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Employee Name</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in recent_employees %}
+                        <tr>
+                            <td><span class="badge bg-light text-dark border">{{ emp.employee_code }}</span></td>
+                            <td>
+                                <div class="fw-semibold">{{ emp.full_name }}</div>
+                                <div class="small text-muted">{{ emp.email }}</div>
+                            </td>
+                            <td>{{ emp.department.name if emp.department else 'Unassigned' }}</td>
+                            <td>
+                                <span class="badge {% if emp.status == 'Active' %}badge-active{% else %}badge-rejected{% endif %}">
+                                    {{ emp.status }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('employees.detail', id=emp.id) }}" class="btn btn-sm btn-light border" title="View Profile">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">No employees registered yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Leaves Table -->
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-calendar-check me-2 text-warning"></i>Recent Leave Applications</span>
+                <a href="{{ url_for('leaves.list_leaves') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Type</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in recent_leaves %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ req.employee.full_name if req.employee else 'Unknown' }}</div>
+                                <div class="small text-muted">{{ req.start_date.strftime('%b %d') }} - {{ req.end_date.strftime('%b %d') }}</div>
+                            </td>
+                            <td>{{ req.leave_type.code if req.leave_type else 'Leave' }}</td>
+                            <td><strong>{{ req.total_days }}</strong></td>
+                            <td>
+                                <span class="badge {% if req.status == 'Approved' %}badge-approved{% elif req.status == 'Pending' %}badge-pending{% else %}badge-rejected{% endif %}">
+                                    {{ req.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">No recent leave requests.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Distribution Cards -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-building me-2 text-info"></i>Organizational Departments Summary</span>
+                <a href="{{ url_for('departments.list_departments') }}" class="btn btn-sm btn-outline-primary">Manage Departments</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for dept in departments %}
+                    <div class="col-md-6 col-lg-3">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-primary">{{ dept.code }}</span>
+                                <span class="small text-muted">{{ dept.employees|length }} Members</span>
+                            </div>
+                            <h6 class="fw-bold mb-1 text-truncate">{{ dept.name }}</h6>
+                            <div class="small text-muted mb-2">Manager: {{ dept.manager.full_name if dept.manager else 'None' }}</div>
+                            <div class="small fw-semibold text-secondary">Budget: Rs. {{ "{:,.0f}".format(dept.budget) }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12 text-center text-muted py-3">No departments created.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

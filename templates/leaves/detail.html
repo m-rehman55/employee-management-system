@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Application #{{ leave.id }} — Details{% endblock %}
+{% block page_title %}Leave Application Details{% endblock %}
+
+{% block content %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary fs-6">Request #{{ leave.id }}</span>
+                    <h3 class="fw-bold mb-0">{{ leave.employee.full_name if leave.employee else 'Unknown' }}</h3>
+                    <span class="badge {% if leave.status == 'Approved' %}badge-approved{% elif leave.status == 'Pending' %}badge-pending{% else %}badge-rejected{% endif %} fs-6">
+                        {{ leave.status }}
+                    </span>
+                </div>
+                <div class="text-muted mt-1">
+                    <span>Department: <strong>{{ leave.employee.department.name if leave.employee and leave.employee.department else 'Unassigned' }}</strong></span>
+                    &bull;
+                    <span>Category: <strong class="text-primary">{{ leave.leave_type.name if leave.leave_type else 'Leave' }}</strong></span>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('leaves.edit', id=leave.id) }}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-1"></i>Review / Edit
+                </a>
+                <form method="POST" action="{{ url_for('leaves.delete', id=leave.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-outline-danger" data-confirm-delete data-item-name="Leave Request #{{ leave.id }}">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                </form>
+                <a href="{{ url_for('leaves.list_leaves') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded border text-center">
+                    <div class="text-muted small text-uppercase fw-bold">Duration</div>
+                    <div class="fw-bold fs-3 text-primary mt-1">{{ leave.total_days }}</div>
+                    <div class="small text-muted">Working Days</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded border">
+                    <div class="text-muted small text-uppercase fw-bold">Start Date</div>
+                    <div class="fw-bold fs-6 mt-1">{{ leave.start_date.strftime('%A, %b %d, %Y') }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded border">
+                    <div class="text-muted small text-uppercase fw-bold">End Date</div>
+                    <div class="fw-bold fs-6 mt-1">{{ leave.end_date.strftime('%A, %b %d, %Y') }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded border">
+                    <div class="text-muted small text-uppercase fw-bold">Applied At</div>
+                    <div class="fw-bold fs-6 mt-1">{{ leave.applied_at.strftime('%b %d, %Y %H:%M') if leave.applied_at else 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Reason and Approval History -->
+    <div class="col-lg-7">
+        <!-- Leave Reason Card -->
+        <div class="card mb-4">
+            <div class="card-header fw-bold"><i class="bi bi-card-text me-2 text-primary"></i>Reason for Absence</div>
+            <div class="card-body">
+                <p class="fs-6 mb-0">{{ leave.reason }}</p>
+            </div>
+        </div>
+
+        <!-- Approval Audit Trail -->
+        <div class="card">
+            <div class="card-header fw-bold"><i class="bi bi-shield-check me-2 text-success"></i>Supervisor Approval Audit History</div>
+            <div class="card-body">
+                {% for apprv in leave.approvals %}
+                    <div class="p-3 border rounded mb-3 bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">{{ apprv.approver.full_name if apprv.approver else 'System Admin' }}</span>
+                            <span class="badge {% if apprv.action == 'Approved' %}badge-approved{% else %}badge-rejected{% endif %}">{{ apprv.action }}</span>
+                        </div>
+                        <div class="small text-muted mb-2">Decision Logged: {{ apprv.action_date.strftime('%b %d, %Y %H:%M') }}</div>
+                        <div class="small fst-italic">"{{ apprv.remarks or 'No remarks provided.' }}"</div>
+                    </div>
+                {% else %}
+                    <div class="text-muted small">No approval or rejection events recorded yet. Currently awaiting supervisor action.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Leave Balance Ledger -->
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header fw-bold"><i class="bi bi-pie-chart me-2 text-warning"></i>Employee Leave Ledger ({{ leave.start_date.year }})</div>
+            <div class="card-body">
+                {% if balance %}
+                    <div class="row text-center g-2 mb-3">
+                        <div class="col-4">
+                            <div class="p-2 border rounded bg-light">
+                                <div class="small text-muted">Allocated</div>
+                                <div class="fw-bold fs-5">{{ balance.total_allocated }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border rounded bg-light">
+                                <div class="small text-muted">Utilized</div>
+                                <div class="fw-bold fs-5 text-danger">{{ balance.used_days }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border rounded bg-light">
+                                <div class="small text-muted">Remaining</div>
+                                <div class="fw-bold fs-5 text-success">{{ balance.remaining_days }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        {% set used_pct = ((balance.used_days / balance.total_allocated) * 100) if balance.total_allocated > 0 else 0 %}
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ used_pct }}%"></div>
+                    </div>
+                {% else %}
+                    <div class="text-muted small">No annual balance ledger initialized for this employee and category.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Attachments Card -->
+        <div class="card">
+            <div class="card-header fw-bold"><i class="bi bi-paperclip me-2 text-secondary"></i>Supporting Medical / Proof Documents</div>
+            <div class="card-body">
+                {% for att in leave.attachments %}
+                    <div class="d-flex align-items-center justify-content-between p-2 border rounded mb-2">
+                        <div>
+                            <i class="bi bi-file-earmark-pdf text-danger me-2 fs-5"></i>
+                            <span class="fw-semibold">{{ att.file_name }}</span>
+                            <span class="text-muted small">({{ att.file_size_kb }} KB)</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-muted small">No attachments uploaded for this application.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Payslip #{{ record.id }} — {{ record.employee.full_name if record.employee else 'Employee' }}{% endblock %}
+{% block page_title %}Official Salary Payslip{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('payroll.list_payroll') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Directory
+        </a>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-success">
+            <i class="bi bi-printer me-1"></i>Print Payslip
+        </button>
+        <a href="{{ url_for('payroll.edit', id=record.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i>Edit Payslip
+        </a>
+        <form method="POST" action="{{ url_for('payroll.delete', id=record.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-outline-danger" data-confirm-delete data-item-name="Payslip #{{ record.id }}">
+                <i class="bi bi-trash me-1"></i>Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Formal Printable Payslip Container -->
+<div class="payslip-container shadow-sm mb-5">
+    <!-- Corporate Header -->
+    <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
+        <div>
+            <h3 class="fw-bold text-primary mb-1">Apex Global Technologies Ltd.</h3>
+            <p class="text-muted small mb-0">Corporate Headquarters, Blue Area, Islamabad</p>
+            <p class="text-muted small mb-0">National Tax Number (NTN): 7182934-1</p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-light text-dark border fs-6 mb-1">PAYSLIP #{{ record.id }}</span>
+            <div class="fw-bold">{{ record.period.period_name if record.period else 'Monthly Cycle' }}</div>
+            <div class="small text-muted">Disbursal Date: {{ record.payment_date.strftime('%b %d, %Y') if record.payment_date else 'Pending' }}</div>
+        </div>
+    </div>
+
+    <!-- Employee & Banking Information Grid -->
+    <div class="row g-3 mb-4 pb-3 border-bottom">
+        <div class="col-md-6">
+            <table class="table table-sm table-borderless mb-0">
+                <tr>
+                    <td class="text-muted" style="width: 45%;">Employee Code:</td>
+                    <td class="fw-bold">{{ record.employee.employee_code if record.employee else '—' }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Employee Name:</td>
+                    <td class="fw-bold">{{ record.employee.full_name if record.employee else '—' }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Department:</td>
+                    <td>{{ record.employee.department.name if record.employee and record.employee.department else '—' }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Designation:</td>
+                    <td>{{ record.employee.designation.title if record.employee and record.employee.designation else '—' }}</td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <table class="table table-sm table-borderless mb-0">
+                <tr>
+                    <td class="text-muted" style="width: 45%;">Payment Method:</td>
+                    <td class="fw-bold">{{ record.payment_method }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Bank Name:</td>
+                    <td>{{ record.employee.bank_details[0].bank_name if record.employee and record.employee.bank_details else 'Direct Deposit' }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Account Number:</td>
+                    <td><code>{{ record.employee.bank_details[0].account_number if record.employee and record.employee.bank_details else '—' }}</code></td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Payment Status:</td>
+                    <td>
+                        <span class="badge {% if record.payment_status == 'Paid' %}badge-paid{% elif record.payment_status == 'Unpaid' %}badge-rejected{% else %}badge-pending{% endif %}">
+                            {{ record.payment_status }}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Earnings & Deductions Tables -->
+    <div class="row g-4 mb-4">
+        <!-- Earnings Column -->
+        <div class="col-md-6">
+            <h6 class="fw-bold text-success text-uppercase border-bottom pb-2">Earnings</h6>
+            <table class="table table-sm mb-0">
+                <tbody>
+                    <tr>
+                        <td>Basic Pay</td>
+                        <td class="text-end fw-semibold">Rs. {{ "{:,.2f}".format(record.basic_salary) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Allowances (HRA, Conveyance, Med)</td>
+                        <td class="text-end fw-semibold">Rs. {{ "{:,.2f}".format(record.total_allowances) }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold table-light">
+                        <td>Gross Earnings:</td>
+                        <td class="text-end text-success">Rs. {{ "{:,.2f}".format(record.gross_salary) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Deductions Column -->
+        <div class="col-md-6">
+            <h6 class="fw-bold text-danger text-uppercase border-bottom pb-2">Deductions</h6>
+            <table class="table table-sm mb-0">
+                <tbody>
+                    <tr>
+                        <td>Statutory & Tax Withholdings</td>
+                        <td class="text-end fw-semibold">Rs. {{ "{:,.2f}".format(record.total_deductions) }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold table-light">
+                        <td>Total Deductions:</td>
+                        <td class="text-end text-danger">Rs. {{ "{:,.2f}".format(record.total_deductions) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Net Salary Highlight Box -->
+    <div class="p-3 bg-light rounded border text-center mb-4">
+        <div class="text-muted small text-uppercase fw-bold">Net Take-Home Salary</div>
+        <div class="display-6 fw-bold text-primary my-1">
+            Rs. {{ "{:,.2f}".format(record.net_salary) }}
+        </div>
+        <div class="small text-muted">Amount Disbursed in PKR (Pakistani Rupees)</div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="row pt-5 mt-4 text-center">
+        <div class="col-6">
+            <div class="border-top pt-2 text-muted small" style="width: 80%; margin: 0 auto;">
+                Finance & Payroll Officer
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border-top pt-2 text-muted small" style="width: 80%; margin: 0 auto;">
+                Employee Signature / Acknowledgement
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

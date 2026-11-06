@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Management — Applications{% endblock %}
+{% block page_title %}Leave Management{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <form method="GET" action="{{ url_for('leaves.list_leaves') }}" class="d-flex flex-wrap align-items-center gap-2">
+                <select name="status" class="form-select" style="min-width: 180px;" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Approved" {% if selected_status == 'Approved' %}selected{% endif %}>Approved</option>
+                    <option value="Rejected" {% if selected_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+
+                <select name="type_id" class="form-select" style="min-width: 200px;" onchange="this.form.submit()">
+                    <option value="">All Leave Types</option>
+                    {% for lt in leave_types %}
+                        <option value="{{ lt.id }}" {% if selected_type_id == lt.id|string %}selected{% endif %}>{{ lt.name }} ({{ lt.code }})</option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                {% if selected_status or selected_type_id %}
+                    <a href="{{ url_for('leaves.list_leaves') }}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </form>
+
+            <a href="{{ url_for('leaves.add') }}" class="btn btn-primary fw-semibold">
+                <i class="bi bi-calendar-plus me-1"></i>Apply For Leave
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="bi bi-calendar2-range text-primary me-2"></i>Leave Applications ({{ leave_requests|length }})</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Req #</th>
+                    <th>Employee Name</th>
+                    <th>Leave Category</th>
+                    <th>Date Range</th>
+                    <th>Total Days</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in leave_requests %}
+                <tr>
+                    <td><span class="badge bg-light text-dark border">#{{ req.id }}</span></td>
+                    <td>
+                        <div class="fw-bold">{{ req.employee.full_name if req.employee else 'Unknown' }}</div>
+                        <div class="small text-muted">{{ req.employee.department.name if req.employee and req.employee.department else '' }}</div>
+                    </td>
+                    <td>
+                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
+                            {{ req.leave_type.name if req.leave_type else 'Leave' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="small fw-semibold">{{ req.start_date.strftime('%b %d, %Y') }}</div>
+                        <div class="small text-muted">to {{ req.end_date.strftime('%b %d, %Y') }}</div>
+                    </td>
+                    <td><strong class="fs-6">{{ req.total_days }}</strong> days</td>
+                    <td>
+                        <div class="small text-truncate" style="max-width: 200px;" title="{{ req.reason }}">
+                            {{ req.reason }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {% if req.status == 'Approved' %}badge-approved{% elif req.status == 'Pending' %}badge-pending{% else %}badge-rejected{% endif %}">
+                            {{ req.status }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('leaves.detail', id=req.id) }}" class="btn btn-light border" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('leaves.edit', id=req.id) }}" class="btn btn-light border" title="Review / Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('leaves.delete', id=req.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-light border text-danger" title="Delete"
+                                        data-confirm-delete data-item-name="Leave Request #{{ req.id }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="bi bi-calendar-x display-4 d-block mb-3 text-secondary"></i>
+                        <h5>No leave requests found</h5>
+                        <p class="small">Submit a new leave application to track employee absences.</p>
+                        <a href="{{ url_for('leaves.add') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Apply For Leave</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
