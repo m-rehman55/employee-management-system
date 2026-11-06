@@ -1,9 +1,12 @@
 # Employee Management System (EMS) — Flask Web Application
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/m-rehman55/employee-management-system)
+
 **Course:** Web Engineering (CSE601330)  
 **Scope:** Weeks 5–8 (Flask, Jinja2, SQLAlchemy, Sessions, Cookies)  
 **Program:** BS Artificial Intelligence / BS Data Science  
 **Target Marks:** 90–100 / 100  
+**GitHub Repository:** [https://github.com/m-rehman55/employee-management-system](https://github.com/m-rehman55/employee-management-system)  
 
 ---
 
