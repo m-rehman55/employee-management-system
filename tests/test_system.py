@@ -139,6 +139,23 @@ def test_logout(auth_client):
     assert dash_resp.status_code == 302
 
 
+def test_toggle_theme(auth_client):
+    """Tests theme toggle endpoint sets and flips the app_theme cookie without 500 error."""
+    # First toggle: defaults from light to dark
+    resp = auth_client.get('/toggle-theme', follow_redirects=True)
+    assert resp.status_code == 200
+    assert b'Executive Dashboard' in resp.data
+    cookie = auth_client.get_cookie('app_theme')
+    assert cookie is not None
+    assert cookie.value == 'dark'
+
+    # Second toggle: flips back to light
+    resp2 = auth_client.get('/toggle-theme', follow_redirects=True)
+    assert resp2.status_code == 200
+    cookie2 = auth_client.get_cookie('app_theme')
+    assert cookie2.value == 'light'
+
+
 # ==============================================================================
 # 3. DEPARTMENT CRUD TESTS
 # ==============================================================================

@@ -286,10 +286,30 @@ def delete(id):
     emp_code = employee.employee_code
     emp_name = employee.full_name
 
+    # Unlink any User account attached to this employee
+    if employee.user:
+        employee.user.employee_id = None
+
     # Clear department manager reference if this employee manages any department
     managed_depts = Department.query.filter_by(manager_id=employee.id).all()
     for d in managed_depts:
         d.manager_id = None
+
+    # Clean up dependent records across modules
+    from models.leave import LeaveApproval, LeaveEncashment
+    from models.department import DepartmentTransferHistory
+    from models.attendance import AttendanceCorrectionRequest, OvertimeRecord, AttendanceSummary, EmployeeShiftSchedule
+    from models.payroll import EmployeeDeduction, EmployeeBonus
+
+    LeaveApproval.query.filter_by(approver_id=employee.id).update({'approver_id': None})
+    LeaveEncashment.query.filter_by(employee_id=employee.id).delete()
+    DepartmentTransferHistory.query.filter_by(employee_id=employee.id).delete()
+    AttendanceCorrectionRequest.query.filter_by(employee_id=employee.id).delete()
+    OvertimeRecord.query.filter_by(employee_id=employee.id).delete()
+    AttendanceSummary.query.filter_by(employee_id=employee.id).delete()
+    EmployeeShiftSchedule.query.filter_by(employee_id=employee.id).delete()
+    EmployeeDeduction.query.filter_by(employee_id=employee.id).delete()
+    EmployeeBonus.query.filter_by(employee_id=employee.id).delete()
 
     db.session.delete(employee)
     db.session.commit()

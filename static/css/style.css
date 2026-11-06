@@ -181,10 +181,15 @@ body.theme-dark {
 body.theme-dark .top-navbar,
 body.theme-dark .card,
 body.theme-dark .card-header,
-body.theme-dark .payslip-container {
-    background-color: #1e293b;
-    border-color: #334155;
-    color: #f8fafc;
+body.theme-dark .payslip-container,
+body.theme-dark footer {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.theme-dark .table {
+    color: #f1f5f9;
 }
 
 body.theme-dark .table thead th {
@@ -198,7 +203,73 @@ body.theme-dark .table tbody td {
     color: #cbd5e1;
 }
 
+body.theme-dark .table-hover tbody tr:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
 body.theme-dark .metric-value {
     color: #f8fafc;
 }
+
+body.theme-dark .form-control,
+body.theme-dark .form-select {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+body.theme-dark .form-control:focus,
+body.theme-dark .form-select:focus {
+    background-color: #0f172a;
+    border-color: #3b82f6;
+    color: #f8fafc;
+}
+
+body.theme-dark .input-group-text {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.theme-dark .bg-light {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+body.theme-dark .dropdown-menu {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+body.theme-dark .dropdown-item {
+    color: #cbd5e1;
+}
+
+body.theme-dark .dropdown-item:hover {
+    background-color: #334155;
+    color: #ffffff;
+}
+
+body.theme-dark .btn-light {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+body.theme-dark .btn-light:hover {
+    background-color: #334155;
+    color: #ffffff;
+}
+
+body.theme-dark .text-dark {
+    color: #f8fafc !important;
+}
+
+body.theme-dark .text-muted {
+    color: #94a3b8 !important;
+}
+
 
