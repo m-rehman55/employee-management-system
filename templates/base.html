@@ -79,11 +79,11 @@
             </div>
             <div class="d-flex align-items-center gap-3">
                 <!-- Theme Toggle Cookie Demonstration -->
-                <a href="{{ url_for('dashboard.toggle_theme') }}" class="btn btn-sm btn-outline-secondary" title="Toggle Theme Cookie">
+                <a href="{{ url_for('dashboard.toggle_theme') }}" id="theme-toggle-btn" class="btn btn-sm btn-outline-secondary" title="Toggle Theme Cookie">
                     {% if app_theme == 'dark' %}
-                        <i class="bi bi-sun-fill text-warning"></i> Light
+                        <i class="bi bi-sun-fill text-warning"></i> <span>Light</span>
                     {% else %}
-                        <i class="bi bi-moon-stars-fill"></i> Dark
+                        <i class="bi bi-moon-stars-fill"></i> <span>Dark</span>
                     {% endif %}
                 </a>
 

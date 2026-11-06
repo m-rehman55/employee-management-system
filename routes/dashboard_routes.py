@@ -3,7 +3,7 @@ routes/dashboard_routes.py - Dashboard Blueprint.
 Computes and renders database-driven analytics and summaries across all 5 modules.
 """
 from datetime import date
-from flask import Blueprint, render_template, request, make_response, redirect, url_for
+from flask import Blueprint, render_template, request, session, make_response, redirect, url_for
 from extensions import db
 from models.employee import Employee
 from models.department import Department
@@ -66,15 +66,14 @@ def index():
     )
 
 @dashboard_bp.route('/toggle-theme')
-@login_required
 def toggle_theme():
     """Toggles UI theme cookie between light and dark."""
     current_theme = request.cookies.get('app_theme', 'light')
     new_theme = 'dark' if current_theme == 'light' else 'light'
     ref = request.referrer
     if not ref or 'toggle-theme' in ref:
-        ref = url_for('dashboard.index')
+        ref = url_for('dashboard.index') if 'user_id' in session else url_for('auth.login')
     response = make_response(redirect(ref))
-    response.set_cookie('app_theme', new_theme, max_age=365*24*60*60, samesite='Lax')
+    response.set_cookie('app_theme', new_theme, path='/', max_age=365*24*60*60, samesite='Lax')
     return response
 

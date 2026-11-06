@@ -24,5 +24,28 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // 3. Instant Client-Side Theme Switcher
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const body = document.body;
+            const isDark = body.classList.contains('theme-dark');
+            const newTheme = isDark ? 'light' : 'dark';
+
+            body.classList.remove('theme-light', 'theme-dark');
+            body.classList.add('theme-' + newTheme);
+
+            if (newTheme === 'dark') {
+                themeBtn.innerHTML = '<i class="bi bi-sun-fill text-warning"></i> <span>Light</span>';
+            } else {
+                themeBtn.innerHTML = '<i class="bi bi-moon-stars-fill"></i> <span>Dark</span>';
+            }
+
+            document.cookie = `app_theme=${newTheme}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
+            fetch(themeBtn.getAttribute('href'), { method: 'GET' }).catch(function () {});
+        });
+    }
 });
 
