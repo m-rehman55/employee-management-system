@@ -58,20 +58,16 @@ def login():
             next_page = safe_local_url(request.args.get('next'), url_for('dashboard.index'))
             response = make_response(redirect(next_page))
 
-            # Convenience cookie stores only the username, never the password.
-            if remember_me:
-                response.set_cookie('saved_username', username, max_age=30*24*60*60, httponly=True, samesite='Lax')
-            else:
-                response.delete_cookie('saved_username')
+            # Never persist or prefill usernames. The checkbox only controls
+            # the session lifetime, and any legacy username cookie is removed.
+            response.delete_cookie('saved_username')
 
             return response
         else:
             flash('Invalid username or password. Please try again.', 'danger')
             return render_template('auth/login.html', username=username)
 
-    # GET request - read cookie for convenience if available
-    saved_username = request.cookies.get('saved_username', '')
-    return render_template('auth/login.html', saved_username=saved_username)
+    return render_template('auth/login.html')
 
 
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])

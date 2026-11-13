@@ -181,8 +181,8 @@ def test_default_theme_follows_system_preference(client):
     assert b'<body class="theme-auto">' in response.data
 
 
-def test_login_success_and_cookie_demonstration(client):
-    """Tests successful login, session establishment, PRG pattern, and cookie creation."""
+def test_login_success_and_session_lifetime(client):
+    """Tests login session behavior without persisting a username cookie."""
     response = client.post(
         '/login',
         data={'username': 'testadmin', 'password': 'adminpass123', 'remember_me': 'on'},
@@ -190,10 +190,10 @@ def test_login_success_and_cookie_demonstration(client):
     )
     assert response.status_code == 200
     assert b'Executive Dashboard' in response.data
-    # Verify cookie was set
-    cookie = client.get_cookie('saved_username')
-    assert cookie is not None
-    assert cookie.value == 'testadmin'
+    client.get('/logout')
+    assert client.get_cookie('saved_username') is None
+    refreshed = client.get('/login')
+    assert b'value="testadmin"' not in refreshed.data
 
 
 def test_login_rejects_external_next_redirect(client):
