@@ -4,6 +4,7 @@ Handles departments, physical branch locations, fiscal budgets, policies, projec
 """
 from datetime import datetime, date
 from extensions import db
+from utils.time import utc_now
 
 
 class DepartmentLocation(db.Model):
@@ -38,7 +39,7 @@ class Department(db.Model):
     location_id = db.Column(db.Integer, db.ForeignKey('department_locations.id'), nullable=True)
     budget = db.Column(db.Numeric(12, 2), default=0.00)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     # Relationships
     location = db.relationship('DepartmentLocation', back_populates='departments')

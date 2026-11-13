@@ -11,6 +11,7 @@ from models.leave import LeaveRequest
 from models.attendance import AttendanceRecord
 from models.payroll import PayrollRecord, PayrollPeriod
 from utils.decorators import login_required
+from utils.security import safe_local_url
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -42,11 +43,10 @@ def index():
     recent_attendance = AttendanceRecord.query.order_by(AttendanceRecord.id.desc()).limit(5).all()
     departments = Department.query.all()
 
-    # 5. Database metadata model count verification
-    total_db_models = len(db.metadata.tables)
-
     # Demonstrate reading theme cookie (e.g. light/dark)
-    current_theme = request.cookies.get('app_theme', 'light')
+    current_theme = request.cookies.get('app_theme')
+    if current_theme not in {'light', 'dark'}:
+        current_theme = 'auto'
 
     return render_template(
         'dashboard/index.html',
@@ -61,7 +61,6 @@ def index():
         recent_leaves=recent_leaves,
         recent_attendance=recent_attendance,
         departments=departments,
-        total_db_models=total_db_models,
         current_theme=current_theme
     )
 
@@ -70,9 +69,10 @@ def toggle_theme():
     """Toggles UI theme cookie between light and dark."""
     current_theme = request.cookies.get('app_theme', 'light')
     new_theme = 'dark' if current_theme == 'light' else 'light'
-    ref = request.referrer
-    if not ref or 'toggle-theme' in ref:
-        ref = url_for('dashboard.index') if 'user_id' in session else url_for('auth.login')
+    fallback = url_for('dashboard.index') if 'user_id' in session else url_for('auth.login')
+    ref = safe_local_url(request.referrer, fallback)
+    if 'toggle-theme' in ref:
+        ref = fallback
     response = make_response(redirect(ref))
     response.set_cookie('app_theme', new_theme, path='/', max_age=365*24*60*60, samesite='Lax')
     return response

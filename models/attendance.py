@@ -4,6 +4,7 @@ Handles work shifts, schedules, daily attendance records, missed-punch correctio
 """
 from datetime import datetime, date, time
 from extensions import db
+from utils.time import utc_now
 
 
 class WorkShift(db.Model):
@@ -137,7 +138,7 @@ class BiometricDevice(db.Model):
     location = db.Column(db.String(100), nullable=False)
     device_model = db.Column(db.String(50), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
-    last_sync_time = db.Column(db.DateTime, default=datetime.utcnow)
+    last_sync_time = db.Column(db.DateTime, default=utc_now)
 
     def __repr__(self):
         return f"<BiometricDevice {self.device_name} @ {self.location}>"

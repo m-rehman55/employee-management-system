@@ -4,6 +4,7 @@ Handles leave types, leave policies, leave balances, requests, multi-tier approv
 """
 from datetime import datetime, date
 from extensions import db
+from utils.time import utc_now
 
 
 class LeaveType(db.Model):
@@ -78,7 +79,7 @@ class LeaveRequest(db.Model):
     total_days = db.Column(db.Numeric(4, 1), nullable=False)
     reason = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(30), default='Pending')  # Pending, Approved, Rejected, Cancelled
-    applied_at = db.Column(db.DateTime, default=datetime.utcnow)
+    applied_at = db.Column(db.DateTime, default=utc_now)
 
     # Relationships
     employee = db.relationship('Employee', back_populates='leave_requests')
@@ -100,7 +101,7 @@ class LeaveApproval(db.Model):
     approval_level = db.Column(db.Integer, default=1)
     action = db.Column(db.String(30), nullable=False)  # Approved, Rejected, Recommended
     remarks = db.Column(db.Text, nullable=True)
-    action_date = db.Column(db.DateTime, default=datetime.utcnow)
+    action_date = db.Column(db.DateTime, default=utc_now)
 
     leave_request = db.relationship('LeaveRequest', back_populates='approvals')
     approver = db.relationship('Employee')
@@ -118,7 +119,7 @@ class LeaveAttachment(db.Model):
     file_name = db.Column(db.String(150), nullable=False)
     file_path = db.Column(db.String(255), nullable=False)
     file_size_kb = db.Column(db.Integer, default=0)
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_at = db.Column(db.DateTime, default=utc_now)
 
     leave_request = db.relationship('LeaveRequest', back_populates='attachments')
 
@@ -153,7 +154,7 @@ class LeaveEncashment(db.Model):
     days_encashed = db.Column(db.Numeric(4, 1), nullable=False)
     encashment_amount = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String(30), default='Pending')  # Pending, Processed, Rejected
-    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    requested_at = db.Column(db.DateTime, default=utc_now)
     processed_at = db.Column(db.DateTime, nullable=True)
 
     employee = db.relationship('Employee')

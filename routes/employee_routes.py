@@ -4,14 +4,14 @@ Provides full CRUD operations, server-side validation, relational updates, and P
 """
 from datetime import datetime, date
 from decimal import Decimal
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, session
 from extensions import db
 from models.employee import (
     Employee, EmployeeProfile, EmployeeEmergencyContact, EmployeeEducation,
     EmployeeExperience, EmployeeBankDetail, EmployeeSkill, EmployeeNote, EmployeeAssetAssignment
 )
 from models.department import Department, Designation
-from utils.decorators import login_required
+from utils.decorators import login_required, role_required
 from utils.validators import validate_email, validate_date
 from utils.audit import log_audit
 
@@ -25,6 +25,8 @@ def list_employees():
     dept_id = request.args.get('dept_id', '')
 
     query = Employee.query
+    if session.get('role_name') == 'Employee':
+        query = query.filter(Employee.id == session.get('employee_id', -1))
 
     if search:
         query = query.filter(
@@ -52,12 +54,15 @@ def list_employees():
 @login_required
 def detail(id):
     """READ: Displays comprehensive employee profile and relational records."""
-    employee = Employee.query.get_or_404(id)
+    employee = db.get_or_404(Employee, id)
+    if session.get('role_name') == 'Employee' and employee.id != session.get('employee_id'):
+        abort(403)
     return render_template('employees/detail.html', employee=employee)
 
 
 @employee_bp.route('/add', methods=['GET', 'POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def add():
     """CREATE: Adds a new employee with server-side validation."""
     departments = Department.query.filter_by(is_active=True).all()
@@ -116,8 +121,8 @@ def add():
             errors.append("Gender selection is required.")
 
         # Foreign Key validation
-        department = Department.query.get(dept_id) if (dept_id and dept_id.isdigit()) else None
-        designation = Designation.query.get(desig_id) if (desig_id and desig_id.isdigit()) else None
+        department = db.session.get(Department, int(dept_id)) if (dept_id and dept_id.isdigit()) else None
+        designation = db.session.get(Designation, int(desig_id)) if (desig_id and desig_id.isdigit()) else None
 
         if errors:
             for error in errors:
@@ -188,9 +193,10 @@ def add():
 
 @employee_bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def edit(id):
     """UPDATE: Edits existing employee record."""
-    employee = Employee.query.get_or_404(id)
+    employee = db.get_or_404(Employee, id)
     departments = Department.query.filter_by(is_active=True).all()
     designations = Designation.query.filter_by(is_active=True).all()
 
@@ -280,41 +286,44 @@ def edit(id):
 
 @employee_bp.route('/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def delete(id):
-    """DELETE: Safely removes an employee record after confirmation."""
-    employee = Employee.query.get_or_404(id)
+    """Deactivate an employee while preserving history and auditability."""
+    employee = db.get_or_404(Employee, id)
     emp_code = employee.employee_code
     emp_name = employee.full_name
 
-    # Unlink any User account attached to this employee
+    if employee.status == 'Inactive':
+        flash(f"Employee {emp_name} is already inactive.", 'info')
+        return redirect(url_for('employees.list_employees'))
+
+    employee.status = 'Inactive'
     if employee.user:
-        employee.user.employee_id = None
+        employee.user.is_active = False
 
     # Clear department manager reference if this employee manages any department
     managed_depts = Department.query.filter_by(manager_id=employee.id).all()
     for d in managed_depts:
         d.manager_id = None
 
-    # Clean up dependent records across modules
-    from models.leave import LeaveApproval, LeaveEncashment
-    from models.department import DepartmentTransferHistory
-    from models.attendance import AttendanceCorrectionRequest, OvertimeRecord, AttendanceSummary, EmployeeShiftSchedule
-    from models.payroll import EmployeeDeduction, EmployeeBonus
-
-    LeaveApproval.query.filter_by(approver_id=employee.id).update({'approver_id': None})
-    LeaveEncashment.query.filter_by(employee_id=employee.id).delete()
-    DepartmentTransferHistory.query.filter_by(employee_id=employee.id).delete()
-    AttendanceCorrectionRequest.query.filter_by(employee_id=employee.id).delete()
-    OvertimeRecord.query.filter_by(employee_id=employee.id).delete()
-    AttendanceSummary.query.filter_by(employee_id=employee.id).delete()
-    EmployeeShiftSchedule.query.filter_by(employee_id=employee.id).delete()
-    EmployeeDeduction.query.filter_by(employee_id=employee.id).delete()
-    EmployeeBonus.query.filter_by(employee_id=employee.id).delete()
-
-    db.session.delete(employee)
     db.session.commit()
 
-    log_audit('DELETE', 'Employee', id, f"Deleted employee {emp_code} ({emp_name})")
-    flash(f"Employee {emp_name} ({emp_code}) was successfully deleted.", 'info')
+    log_audit('DEACTIVATE', 'Employee', id, f"Deactivated employee {emp_code} ({emp_name}); history preserved")
+    flash(f"Employee {emp_name} ({emp_code}) was deactivated. History was preserved.", 'info')
+    return redirect(url_for('employees.list_employees'))
+
+
+@employee_bp.route('/<int:id>/restore', methods=['POST'])
+@login_required
+@role_required('Administrator', 'HR Manager')
+def restore(id):
+    """Restore an inactive employee without recreating historical records."""
+    employee = db.get_or_404(Employee, id)
+    employee.status = 'Active'
+    if employee.user:
+        employee.user.is_active = True
+    db.session.commit()
+    log_audit('RESTORE', 'Employee', employee.id, f"Restored employee {employee.employee_code}")
+    flash(f"Employee {employee.full_name} was restored.", 'success')
     return redirect(url_for('employees.list_employees'))
 

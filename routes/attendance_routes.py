@@ -4,11 +4,11 @@ Provides full CRUD operations, shift schedules, hours calculation, and PRG patte
 """
 from datetime import datetime, date, time
 from decimal import Decimal
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, session
 from extensions import db
 from models.attendance import AttendanceRecord, WorkShift, AttendanceBreak
 from models.employee import Employee
-from utils.decorators import login_required
+from utils.decorators import login_required, role_required
 from utils.validators import validate_date, validate_numeric
 from utils.audit import log_audit
 
@@ -22,6 +22,8 @@ def list_attendance():
     emp_id = request.args.get('emp_id', '')
 
     query = AttendanceRecord.query
+    if session.get('role_name') == 'Employee':
+        query = query.filter(AttendanceRecord.employee_id == session.get('employee_id', -1))
 
     if date_filter:
         valid_date, d_val, _ = validate_date(date_filter)
@@ -46,12 +48,15 @@ def list_attendance():
 @login_required
 def detail(id):
     """READ: Shows attendance punch log details, hours, and registered breaks."""
-    record = AttendanceRecord.query.get_or_404(id)
+    record = db.get_or_404(AttendanceRecord, id)
+    if session.get('role_name') == 'Employee' and record.employee_id != session.get('employee_id'):
+        abort(403)
     return render_template('attendance/detail.html', record=record)
 
 
 @attendance_bp.route('/add', methods=['GET', 'POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def add():
     """CREATE: Records a new daily attendance entry with server-side validation."""
     employees = Employee.query.filter_by(status='Active').all()
@@ -67,11 +72,11 @@ def add():
         notes = request.form.get('notes', '').strip()
 
         errors = []
-        employee = Employee.query.get(emp_id) if (emp_id and emp_id.isdigit()) else None
+        employee = db.session.get(Employee, int(emp_id)) if (emp_id and emp_id.isdigit()) else None
         if not employee:
             errors.append("A valid employee must be selected.")
 
-        shift = WorkShift.query.get(shift_id) if (shift_id and shift_id.isdigit()) else None
+        shift = db.session.get(WorkShift, int(shift_id)) if (shift_id and shift_id.isdigit()) else None
 
         valid_date, work_date, date_err = validate_date(work_date_str, "Work Date")
         if not valid_date:
@@ -147,9 +152,10 @@ def add():
 
 @attendance_bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def edit(id):
     """UPDATE: Modifies attendance punches and working hours."""
-    record = AttendanceRecord.query.get_or_404(id)
+    record = db.get_or_404(AttendanceRecord, id)
     employees = Employee.query.filter_by(status='Active').all()
     shifts = WorkShift.query.all()
 
@@ -161,7 +167,7 @@ def edit(id):
         notes = request.form.get('notes', '').strip()
 
         errors = []
-        shift = WorkShift.query.get(shift_id) if (shift_id and shift_id.isdigit()) else None
+        shift = db.session.get(WorkShift, int(shift_id)) if (shift_id and shift_id.isdigit()) else None
 
         cin_dt = None
         cout_dt = None
@@ -225,9 +231,10 @@ def edit(id):
 
 @attendance_bp.route('/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def delete(id):
     """DELETE: Safely removes an attendance entry."""
-    record = AttendanceRecord.query.get_or_404(id)
+    record = db.get_or_404(AttendanceRecord, id)
     emp_name = record.employee.full_name if record.employee else 'Unknown'
     work_d = record.work_date
 

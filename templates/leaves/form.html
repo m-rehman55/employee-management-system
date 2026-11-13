@@ -22,7 +22,10 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Employee <span class="text-danger">*</span></label>
-                            {% if action == 'Add' %}
+                            {% if current_role == 'Employee' %}
+                                <input type="hidden" name="employee_id" value="{{ session.get('employee_id') }}">
+                                <input type="text" class="form-control" value="{{ current_user_name }}" readonly>
+                            {% elif action == 'Add' %}
                                 <select name="employee_id" class="form-select" required>
                                     <option value="">-- Select Employee --</option>
                                     {% set cur_emp = form_data.employee_id or '' %}
@@ -68,23 +71,13 @@
 
                         <div class="col-12">
                             <label class="form-label fw-semibold">Reason for Absence <span class="text-danger">*</span></label>
-                            <textarea name="reason" class="form-control" rows="3" placeholder="Provide detailed operational reason for leave request" required>{{ form_data.reason or (leave.reason if leave else '') }}</textarea>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Application Status</label>
-                            {% set cur_status = form_data.status or (leave.status if leave else 'Pending') %}
-                            <select name="status" class="form-select">
-                                <option value="Pending" {% if cur_status == 'Pending' %}selected{% endif %}>Pending</option>
-                                <option value="Approved" {% if cur_status == 'Approved' %}selected{% endif %}>Approved</option>
-                                <option value="Rejected" {% if cur_status == 'Rejected' %}selected{% endif %}>Rejected</option>
-                            </select>
+                            <textarea name="reason" class="form-control" rows="3" placeholder="Explain the reason for this leave request" required>{{ form_data.reason or (leave.reason if leave else '') }}</textarea>
                         </div>
 
                         {% if action == 'Edit' %}
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Supervisor Remarks</label>
-                            <input type="text" name="remarks" class="form-control" placeholder="Comments or condition of approval">
+                            <label class="form-label fw-semibold">Current Status</label>
+                            <div class="form-control bg-light">{{ leave.status }}</div>
                         </div>
                         {% endif %}
                     </div>
@@ -92,7 +85,8 @@
                     <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
                         <a href="{{ url_for('leaves.list_leaves') }}" class="btn btn-outline-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary fw-semibold px-4">
-                            <i class="bi bi-check-circle me-1"></i>Save Leave Record
+                            <i class="bi bi-check-circle me-1"></i>
+                            {% if action == 'Add' and current_role == 'Employee' %}Submit Request{% else %}Save Changes{% endif %}
                         </button>
                     </div>
                 </form>

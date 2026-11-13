@@ -2,9 +2,12 @@
 models/auth.py - Authentication, Authorization, Audit Trails, and System Settings (4 models).
 Handles system users, RBAC roles, compliance audit logs, and enterprise settings.
 """
-from datetime import datetime
+from datetime import timedelta
+import hashlib
+import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
+from utils.time import utc_now
 
 
 class Role(db.Model):
@@ -50,6 +53,38 @@ class User(db.Model):
         return f"<User {self.username} (Role:{self.role.role_name if self.role else self.role_id})>"
 
 
+class PasswordResetToken(db.Model):
+    """Single-use, expiring password reset token stored as a hash."""
+    __tablename__ = 'password_reset_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    token_hash = db.Column(db.String(64), unique=True, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+    user = db.relationship('User', backref=db.backref('password_reset_tokens', lazy=True))
+
+    @staticmethod
+    def issue(user, hours=1):
+        raw_token = secrets.token_urlsafe(32)
+        reset = PasswordResetToken(
+            user=user,
+            token_hash=hashlib.sha256(raw_token.encode('utf-8')).hexdigest(),
+            expires_at=utc_now() + timedelta(hours=hours),
+        )
+        return reset, raw_token
+
+    @staticmethod
+    def find(raw_token):
+        token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
+        reset = PasswordResetToken.query.filter_by(token_hash=token_hash, used_at=None).first()
+        if not reset or reset.expires_at <= utc_now():
+            return None
+        return reset
+
+
 class AuditLog(db.Model):
     """Tamper-evident audit trail for system operations and record modifications."""
     __tablename__ = 'audit_logs'
@@ -60,7 +95,7 @@ class AuditLog(db.Model):
     target_model = db.Column(db.String(100), nullable=False)
     record_id = db.Column(db.Integer, nullable=True)
     details = db.Column(db.Text, nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=utc_now)
     ip_address = db.Column(db.String(50), nullable=True)
 
     user = db.relationship('User', back_populates='audit_logs')

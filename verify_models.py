@@ -51,7 +51,7 @@ def run_verification():
                 'employee_deductions', 'employee_bonuses'
             ],
             "Auth & System Infrastructure": [
-                'roles', 'users', 'audit_logs', 'system_settings'
+                'roles', 'users', 'password_reset_tokens', 'audit_logs', 'system_settings'
             ]
         }
 

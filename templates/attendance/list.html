@@ -28,9 +28,11 @@
                 {% endif %}
             </form>
 
+            {% if current_role in ['Administrator', 'HR Manager'] %}
             <a href="{{ url_for('attendance.add') }}" class="btn btn-primary fw-semibold">
                 <i class="bi bi-clock me-1"></i>Record Daily Attendance
             </a>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -92,7 +94,7 @@
                             <a href="{{ url_for('attendance.detail', id=r.id) }}" class="btn btn-light border" title="View Punch Details">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <a href="{{ url_for('attendance.edit', id=r.id) }}" class="btn btn-light border" title="Edit">
+                            {% if current_role in ['Administrator', 'HR Manager'] %}<a href="{{ url_for('attendance.edit', id=r.id) }}" class="btn btn-light border" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <form method="POST" action="{{ url_for('attendance.delete', id=r.id) }}" style="display:inline;">
@@ -100,7 +102,7 @@
                                         data-confirm-delete data-item-name="Attendance for {{ r.employee.full_name if r.employee else 'Employee' }} on {{ r.work_date }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
-                            </form>
+                            </form>{% endif %}
                         </div>
                     </td>
                 </tr>
@@ -110,7 +112,9 @@
                         <i class="bi bi-clock display-4 d-block mb-3 text-secondary"></i>
                         <h5>No attendance logs found</h5>
                         <p class="small">Add an attendance punch entry for an employee.</p>
+                        {% if current_role in ['Administrator', 'HR Manager'] %}
                         <a href="{{ url_for('attendance.add') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Record Attendance</a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

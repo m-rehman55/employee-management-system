@@ -28,9 +28,11 @@
             </form>
 
             <!-- Add Employee Button -->
+            {% if current_role in ['Administrator', 'HR Manager'] %}
             <a href="{{ url_for('employees.add') }}" class="btn btn-primary fw-semibold">
-                <i class="bi bi-person-plus-fill me-1"></i>Add New Employee
+                <i class="bi bi-person-plus-fill me-1"></i>Add Employee
             </a>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -84,12 +86,20 @@
                             <a href="{{ url_for('employees.edit', id=emp.id) }}" class="btn btn-light border" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <form method="POST" action="{{ url_for('employees.delete', id=emp.id) }}" style="display:inline;">
-                                <button type="submit" class="btn btn-light border text-danger" title="Delete"
-                                        data-confirm-delete data-item-name="{{ emp.full_name }} ({{ emp.employee_code }})">
-                                    <i class="bi bi-trash"></i>
+                            {% if emp.status == 'Inactive' %}
+                            <form method="POST" action="{{ url_for('employees.restore', id=emp.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-light border text-success" title="Restore">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
                                 </button>
                             </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('employees.delete', id=emp.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-light border text-danger" title="Delete"
+                                        data-confirm-delete data-confirm-message="Deactivate {{ emp.full_name }}? Their history will be preserved and their account will be disabled." data-item-name="{{ emp.full_name }} ({{ emp.employee_code }})">
+                                    <i class="bi bi-person-slash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
@@ -99,7 +109,9 @@
                         <i class="bi bi-people display-4 d-block mb-3 text-secondary"></i>
                         <h5>No employee records found</h5>
                         <p class="small">Try adjusting your search criteria or add a new employee.</p>
+                        {% if current_role in ['Administrator', 'HR Manager'] %}
                         <a href="{{ url_for('employees.add') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Add Employee</a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

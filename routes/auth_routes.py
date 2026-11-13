@@ -2,11 +2,13 @@
 routes/auth_routes.py - Authentication and Session Management Blueprint.
 Handles login, logout, session establishment, cookie demonstration, and PRG redirects.
 """
-from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response, current_app
 from extensions import db
-from models.auth import User
+from models.auth import User, PasswordResetToken
 from utils.audit import log_audit
+from utils.security import safe_local_url
+from utils.time import utc_now
+from utils.mail import send_password_reset_email
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -44,7 +46,7 @@ def login():
             session.permanent = True if remember_me else False
 
             # Update last login timestamp
-            user.last_login = datetime.utcnow()
+            user.last_login = utc_now()
             db.session.commit()
 
             # Record audit log
@@ -53,10 +55,10 @@ def login():
             flash(f'Welcome back, {session["employee_name"]}!', 'success')
 
             # Post/Redirect/Get Pattern to prevent form resubmission
-            next_page = request.args.get('next')
-            response = make_response(redirect(next_page if next_page else url_for('dashboard.index')))
+            next_page = safe_local_url(request.args.get('next'), url_for('dashboard.index'))
+            response = make_response(redirect(next_page))
 
-            # Demonstrate appropriate cookie usage (remember username for convenience; never store passwords)
+            # Convenience cookie stores only the username, never the password.
             if remember_me:
                 response.set_cookie('saved_username', username, max_age=30*24*60*60, httponly=True, samesite='Lax')
             else:
@@ -70,6 +72,85 @@ def login():
     # GET request - read cookie for convenience if available
     saved_username = request.cookies.get('saved_username', '')
     return render_template('auth/login.html', saved_username=saved_username)
+
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Start a password reset without revealing whether an account exists."""
+    if request.method == 'POST':
+        identity = request.form.get('identity', '').strip()
+        user = User.query.filter_by(username=identity).first()
+        if not user:
+            user = User.query.join(User.employee).filter_by(email=identity.lower()).first()
+
+        if user and user.is_active:
+            PasswordResetToken.query.filter_by(user_id=user.id, used_at=None).update({'used_at': utc_now()})
+            reset, raw_token = PasswordResetToken.issue(user)
+            db.session.add(reset)
+            db.session.commit()
+            reset_url = url_for('auth.reset_password', token=raw_token, _external=True)
+            recipient = user.employee.email if user.employee else None
+            if recipient:
+                try:
+                    send_password_reset_email(recipient, reset_url)
+                except Exception:
+                    current_app.logger.exception('Password reset email delivery failed')
+            if current_app.config.get('RESET_LINK_LOGGING', True):
+                current_app.logger.info('Password reset link for %s: %s', user.username, reset_url)
+            if current_app.debug or current_app.testing:
+                flash(f'Development reset link: {reset_url}', 'info')
+
+        flash('If the account exists, password reset instructions have been issued.', 'info')
+        return redirect(url_for('auth.forgot_password'))
+
+    return render_template('auth/forgot_password.html')
+
+
+@auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    reset = PasswordResetToken.find(token)
+    if not reset:
+        flash('This reset link is invalid or has expired.', 'danger')
+        return redirect(url_for('auth.forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirmation = request.form.get('confirmation', '')
+        if len(password) < 10:
+            flash('Password must be at least 10 characters long.', 'danger')
+        elif password != confirmation:
+            flash('Passwords do not match.', 'danger')
+        else:
+            reset.user.set_password(password)
+            reset.used_at = utc_now()
+            db.session.commit()
+            flash('Password updated successfully. You can now sign in.', 'success')
+            return redirect(url_for('auth.login'))
+
+    return render_template('auth/reset_password.html')
+
+
+@auth_bp.route('/change-password', methods=['GET', 'POST'])
+def change_password():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login', next=request.url))
+    user = db.session.get(User, session['user_id'])
+    if request.method == 'POST':
+        current = request.form.get('current_password', '')
+        password = request.form.get('password', '')
+        confirmation = request.form.get('confirmation', '')
+        if not user.check_password(current):
+            flash('Current password is incorrect.', 'danger')
+        elif len(password) < 10:
+            flash('New password must be at least 10 characters long.', 'danger')
+        elif password != confirmation:
+            flash('New passwords do not match.', 'danger')
+        else:
+            user.set_password(password)
+            db.session.commit()
+            flash('Your password has been changed successfully.', 'success')
+            return redirect(url_for('dashboard.index'))
+    return render_template('auth/change_password.html')
 
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])

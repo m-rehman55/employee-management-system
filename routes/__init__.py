@@ -8,6 +8,7 @@ from routes.department_routes import department_bp
 from routes.leave_routes import leave_bp
 from routes.attendance_routes import attendance_bp
 from routes.payroll_routes import payroll_bp
+from routes.admin_routes import admin_bp
 
 __all__ = [
     'auth_bp',
@@ -17,5 +18,6 @@ __all__ = [
     'leave_bp',
     'attendance_bp',
     'payroll_bp',
+    'admin_bp',
 ]
 

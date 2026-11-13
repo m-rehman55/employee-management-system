@@ -4,11 +4,11 @@ Provides full CRUD operations, automated salary calculations, payslip generation
 """
 from datetime import datetime, date
 from decimal import Decimal
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, session
 from extensions import db
 from models.payroll import PayrollRecord, PayrollPeriod, PayrollItemDetail, EmployeeSalaryAssignment
 from models.employee import Employee
-from utils.decorators import login_required
+from utils.decorators import login_required, role_required
 from utils.validators import validate_numeric, validate_date
 from utils.audit import log_audit
 
@@ -22,6 +22,8 @@ def list_payroll():
     status_filter = request.args.get('status', '').strip()
 
     query = PayrollRecord.query
+    if session.get('role_name') == 'Employee':
+        query = query.filter(PayrollRecord.employee_id == session.get('employee_id', -1))
 
     if period_id and period_id.isdigit():
         query = query.filter(PayrollRecord.payroll_period_id == int(period_id))
@@ -44,12 +46,15 @@ def list_payroll():
 @login_required
 def detail(id):
     """READ: Renders the printable official payslip with itemized line items."""
-    record = PayrollRecord.query.get_or_404(id)
+    record = db.get_or_404(PayrollRecord, id)
+    if session.get('role_name') == 'Employee' and record.employee_id != session.get('employee_id'):
+        abort(403)
     return render_template('payroll/detail.html', record=record)
 
 
 @payroll_bp.route('/add', methods=['GET', 'POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def add():
     """CREATE: Generates a new payroll record / payslip with server-side validation."""
     employees = Employee.query.filter_by(status='Active').all()
@@ -66,11 +71,11 @@ def add():
         payment_date_str = request.form.get('payment_date', '').strip()
 
         errors = []
-        employee = Employee.query.get(emp_id) if (emp_id and emp_id.isdigit()) else None
+        employee = db.session.get(Employee, int(emp_id)) if (emp_id and emp_id.isdigit()) else None
         if not employee:
             errors.append("A valid employee must be selected.")
 
-        period = PayrollPeriod.query.get(period_id) if (period_id and period_id.isdigit()) else None
+        period = db.session.get(PayrollPeriod, int(period_id)) if (period_id and period_id.isdigit()) else None
         if not period:
             errors.append("A valid payroll cycle period must be selected.")
 
@@ -156,9 +161,10 @@ def add():
 
 @payroll_bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def edit(id):
     """UPDATE: Modifies compensation components and payment status."""
-    record = PayrollRecord.query.get_or_404(id)
+    record = db.get_or_404(PayrollRecord, id)
     employees = Employee.query.filter_by(status='Active').all()
     periods = PayrollPeriod.query.order_by(PayrollPeriod.id.desc()).all()
 
@@ -237,9 +243,10 @@ def edit(id):
 
 @payroll_bp.route('/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def delete(id):
     """DELETE: Safely removes a payslip record."""
-    record = PayrollRecord.query.get_or_404(id)
+    record = db.get_or_404(PayrollRecord, id)
     emp_name = record.employee.full_name if record.employee else 'Unknown'
     period_name = record.period.period_name if record.period else 'Period'
 

@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from extensions import db
 from models.department import Department, DepartmentLocation, Designation, DepartmentBudget, DepartmentPolicy, DepartmentProject
 from models.employee import Employee
-from utils.decorators import login_required
+from utils.decorators import login_required, role_required
 from utils.validators import validate_numeric
 from utils.audit import log_audit
 
@@ -34,12 +34,13 @@ def list_departments():
 @login_required
 def detail(id):
     """READ: Shows department profile, staff list, budget, policies, and active projects."""
-    department = Department.query.get_or_404(id)
+    department = db.get_or_404(Department, id)
     return render_template('departments/detail.html', department=department)
 
 
 @department_bp.route('/add', methods=['GET', 'POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def add():
     """CREATE: Adds a new department with server-side validation."""
     employees = Employee.query.filter_by(status='Active').all()
@@ -107,9 +108,10 @@ def add():
 
 @department_bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def edit(id):
     """UPDATE: Modifies existing department information."""
-    department = Department.query.get_or_404(id)
+    department = db.get_or_404(Department, id)
     employees = Employee.query.filter_by(status='Active').all()
     locations = DepartmentLocation.query.all()
 
@@ -166,9 +168,10 @@ def edit(id):
 
 @department_bp.route('/<int:id>/delete', methods=['POST'])
 @login_required
+@role_required('Administrator', 'HR Manager')
 def delete(id):
     """DELETE: Safely removes department after checking constraints."""
-    department = Department.query.get_or_404(id)
+    department = db.get_or_404(Department, id)
     dept_name = department.name
 
     # Check if department has assigned employees

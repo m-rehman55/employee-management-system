@@ -23,6 +23,7 @@
             </div>
 
             <div class="d-flex gap-2">
+                {% if current_role in ['Administrator', 'HR Manager'] %}
                 <a href="{{ url_for('leaves.edit', id=leave.id) }}" class="btn btn-primary">
                     <i class="bi bi-pencil me-1"></i>Review / Edit
                 </a>
@@ -31,6 +32,7 @@
                         <i class="bi bi-trash me-1"></i>Delete
                     </button>
                 </form>
+                {% endif %}
                 <a href="{{ url_for('leaves.list_leaves') }}" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left me-1"></i>Back
                 </a>
@@ -38,6 +40,26 @@
         </div>
 
         <hr class="my-4">
+
+        {% if leave.status == 'Pending' and current_role in ['Administrator', 'HR Manager'] %}
+        <div class="border rounded-3 p-3 mb-4 approval-panel">
+            <div class="fw-semibold mb-1"><i class="bi bi-check2-square me-2 text-primary"></i>Pending approval</div>
+            <div class="text-muted small mb-3">Record the decision and add a short note for the audit trail.</div>
+            <form method="POST" action="{{ url_for('leaves.decision', id=leave.id) }}">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-8">
+                        <label class="form-label small fw-semibold" for="decision-remarks">Decision note</label>
+                        <input id="decision-remarks" name="remarks" class="form-control" required
+                               placeholder="e.g. Approved for the requested dates">
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button class="btn btn-success flex-fill" name="decision" value="Approved" type="submit">Approve</button>
+                        <button class="btn btn-outline-danger flex-fill" name="decision" value="Rejected" type="submit">Reject</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
 
         <div class="row g-4">
             <div class="col-md-3">
@@ -82,7 +104,7 @@
 
         <!-- Approval Audit Trail -->
         <div class="card">
-            <div class="card-header fw-bold"><i class="bi bi-shield-check me-2 text-success"></i>Supervisor Approval Audit History</div>
+            <div class="card-header fw-bold"><i class="bi bi-shield-check me-2 text-success"></i>Approval History</div>
             <div class="card-body">
                 {% for apprv in leave.approvals %}
                     <div class="p-3 border rounded mb-3 bg-light">
@@ -90,11 +112,11 @@
                             <span class="fw-bold">{{ apprv.approver.full_name if apprv.approver else 'System Admin' }}</span>
                             <span class="badge {% if apprv.action == 'Approved' %}badge-approved{% else %}badge-rejected{% endif %}">{{ apprv.action }}</span>
                         </div>
-                        <div class="small text-muted mb-2">Decision Logged: {{ apprv.action_date.strftime('%b %d, %Y %H:%M') }}</div>
-                        <div class="small fst-italic">"{{ apprv.remarks or 'No remarks provided.' }}"</div>
+                        <div class="small text-muted mb-2">Decision: {{ apprv.action_date.strftime('%b %d, %Y %H:%M') }}</div>
+                        <div class="small fst-italic">{{ apprv.remarks or 'No note provided.' }}</div>
                     </div>
                 {% else %}
-                    <div class="text-muted small">No approval or rejection events recorded yet. Currently awaiting supervisor action.</div>
+                    <div class="text-muted small">No decision recorded. This request is waiting for review.</div>
                 {% endfor %}
             </div>
         </div>

@@ -172,7 +172,7 @@ d:\Desktop\WEB DEVELOPMENT\
 │       └── main.js            # Auto-dismissing alerts, delete confirmation popups
 └── tests/
     ├── __init__.py
-    ├── test_system.py          # 12 automated test cases covering auth, CRUD, validation
+    ├── test_system.py          # Authentication, CRUD, validation, security and error tests
     └── test_persistence.py     # Verifies SQLite file persistence across app restarts
 ```
 

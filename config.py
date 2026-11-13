@@ -5,9 +5,19 @@ import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+
+def _secret_key():
+    secret = os.environ.get('SECRET_KEY')
+    if secret:
+        return secret
+    if os.environ.get('APP_ENV', 'development').lower() == 'production':
+        raise RuntimeError('SECRET_KEY must be set in production')
+    return 'ems-development-only-secret-change-me'
+
 class Config:
     """Base application configuration."""
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'ems-university-secret-key-2026-cse601330')
+    APP_ENV = os.environ.get('APP_ENV', 'development').lower()
+    SECRET_KEY = _secret_key()
     
     # Render & local database URI handling
     _raw_db_url = os.environ.get('DATABASE_URL')
@@ -20,11 +30,21 @@ class Config:
     # Session & Cookie security settings
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = APP_ENV == 'production'
     PERMANENT_SESSION_LIFETIME = 86400  # 24 hours in seconds
+    RESET_LINK_LOGGING = APP_ENV != 'production'
+    CSRF_ENABLED = True
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
 
 class TestConfig(Config):
     """Configuration for automated test suite."""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
+    CSRF_ENABLED = False
 

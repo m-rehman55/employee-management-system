@@ -4,6 +4,7 @@ Handles employees, personal profiles, emergency contacts, education, experience,
 """
 from datetime import datetime, date
 from extensions import db
+from utils.time import utc_now
 
 
 class Employee(db.Model):
@@ -23,7 +24,7 @@ class Employee(db.Model):
     designation_id = db.Column(db.Integer, db.ForeignKey('designations.id'), nullable=True)
     employment_type = db.Column(db.String(30), default='Full-Time')  # Full-Time, Part-Time, Contract, Intern
     status = db.Column(db.String(30), default='Active')  # Active, On Leave, Terminated, Resigned
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     # Relationships
     department = db.relationship('Department', foreign_keys=[department_id], back_populates='employees')
@@ -140,7 +141,7 @@ class EmployeeDocument(db.Model):
     document_type = db.Column(db.String(50), nullable=False)  # Resume, CNIC, Degree, Contract
     document_name = db.Column(db.String(150), nullable=False)
     file_path = db.Column(db.String(255), nullable=False)
-    upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+    upload_date = db.Column(db.DateTime, default=utc_now)
     verification_status = db.Column(db.String(30), default='Verified')  # Pending, Verified, Rejected
 
     employee = db.relationship('Employee', back_populates='documents')
@@ -195,7 +196,7 @@ class EmployeeNote(db.Model):
     note_content = db.Column(db.Text, nullable=False)
     note_type = db.Column(db.String(50), default='General')  # General, Performance, Commendation, Disciplinary
     created_by = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     employee = db.relationship('Employee', back_populates='notes')
 

@@ -14,14 +14,14 @@
         <button onclick="window.print()" class="btn btn-success">
             <i class="bi bi-printer me-1"></i>Print Payslip
         </button>
-        <a href="{{ url_for('payroll.edit', id=record.id) }}" class="btn btn-primary">
+        {% if session.get('role_name') in ['Administrator', 'HR Manager'] %}<a href="{{ url_for('payroll.edit', id=record.id) }}" class="btn btn-primary">
             <i class="bi bi-pencil me-1"></i>Edit Payslip
         </a>
         <form method="POST" action="{{ url_for('payroll.delete', id=record.id) }}" style="display:inline;">
             <button type="submit" class="btn btn-outline-danger" data-confirm-delete data-item-name="Payslip #{{ record.id }}">
                 <i class="bi bi-trash me-1"></i>Delete
             </button>
-        </form>
+        </form>{% endif %}
     </div>
 </div>
 

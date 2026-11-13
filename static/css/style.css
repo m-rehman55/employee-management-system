@@ -189,7 +189,17 @@ body.theme-dark footer {
 }
 
 body.theme-dark .table {
-    color: #f1f5f9;
+    --bs-table-bg: #1e293b;
+    --bs-table-color: #e2e8f0;
+    --bs-table-border-color: #334155;
+    color: #e2e8f0;
+    background-color: #1e293b;
+}
+
+body.theme-dark .table > :not(caption) > * > * {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border-bottom-color: #334155;
 }
 
 body.theme-dark .table thead th {
@@ -200,12 +210,35 @@ body.theme-dark .table thead th {
 
 body.theme-dark .table tbody td {
     border-color: #334155;
-    color: #cbd5e1;
+    color: #e2e8f0;
 }
 
 body.theme-dark .table-hover tbody tr:hover {
     color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: #26364d;
+}
+
+body.theme-dark .table-hover tbody tr:hover > * {
+    color: #ffffff;
+    background-color: #26364d;
+}
+
+body.theme-dark .table .text-muted {
+    color: #a8b6c8 !important;
+}
+
+body.theme-dark .table .text-primary {
+    color: #7db2ff !important;
+}
+
+body.theme-dark .table .bg-light,
+body.theme-dark .table .table-light {
+    background-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.theme-dark .table code {
+    color: #f0abfc;
 }
 
 body.theme-dark .metric-value {
@@ -224,6 +257,11 @@ body.theme-dark .form-select:focus {
     background-color: #0f172a;
     border-color: #3b82f6;
     color: #f8fafc;
+}
+
+body.theme-dark .form-control::placeholder {
+    color: #94a3b8;
+    opacity: 1;
 }
 
 body.theme-dark .input-group-text {
@@ -270,6 +308,82 @@ body.theme-dark .text-dark {
 
 body.theme-dark .text-muted {
     color: #94a3b8 !important;
+}
+
+body.theme-dark .form-check-label,
+body.theme-dark .form-label {
+    color: #f8fafc;
+}
+
+/* Responsive application shell: keep navigation usable without forcing
+   desktop-width content onto phone screens. */
+@media (max-width: 767.98px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    .sidebar {
+        width: 72px;
+        flex: 0 0 72px;
+    }
+
+    .sidebar .brand {
+        justify-content: center;
+        padding: 1.25rem 0.5rem;
+    }
+
+    .sidebar .brand span,
+    .sidebar .nav-link span,
+    .sidebar > .p-3 {
+        display: none;
+    }
+
+    .sidebar .nav-link {
+        justify-content: center;
+        margin: 0.2rem 0.5rem;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .sidebar .nav-link i {
+        margin: 0;
+    }
+
+    .top-navbar {
+        padding: 0.7rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .top-navbar .dropdown-toggle span {
+        display: none;
+    }
+
+    .top-navbar .d-flex {
+        gap: 0.5rem !important;
+    }
+
+    .container-fluid.px-4 {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .card-body {
+        padding: 1rem !important;
+    }
+
+    .payslip-container {
+        padding: 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
 }
 
 
