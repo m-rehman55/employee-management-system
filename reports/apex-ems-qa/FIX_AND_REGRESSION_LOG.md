@@ -10,7 +10,7 @@
 | Role-based write/delete enforcement | Employee mutation test passed |
 | ORM/time deprecation cleanup | Compile and full test suite passed |
 | Mobile/reduced-motion CSS improvements | Source reviewed; browser viewport check pending |
-| Password reset/change-password flow with expiring single-use tokens | Automated reset test passed; SMTP delivery requires deployment configuration |
+| Admin-reviewed password reset/change-password flow with expiring single-use tokens | Automated reset test passed; no email delivery is used |
 | Employee soft deactivation/restore | Automated lifecycle test passed; historical records are preserved |
 | SQLite admin backup action | Implemented; needs production persistent-database backup strategy |
 | CSRF protection for state-changing requests | Compile and full test suite passed |

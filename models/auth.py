@@ -85,6 +85,21 @@ class PasswordResetToken(db.Model):
         return reset
 
 
+class PasswordResetRequest(db.Model):
+    """Admin-reviewed password reset request; no email delivery is involved."""
+    __tablename__ = 'password_reset_requests'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), default='Pending', nullable=False)
+    requested_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('password_reset_requests', lazy=True))
+    reviewer = db.relationship('User', foreign_keys=[reviewed_by])
+
+
 class AuditLog(db.Model):
     """Tamper-evident audit trail for system operations and record modifications."""
     __tablename__ = 'audit_logs'

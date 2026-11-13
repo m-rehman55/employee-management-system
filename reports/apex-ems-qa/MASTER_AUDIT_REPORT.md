@@ -4,7 +4,7 @@ Date: 2026-11-13  |  Scope: local Flask application in this workspace
 
 ## Executive result
 
-The application is functional for the tested local workflows and the automated suite is green (`21 passed`). The schema contains 46 registered SQLAlchemy tables. Authentication, password reset, CSRF, role checks, leave approval, safe redirects, employee self-service privacy, soft deactivation, and SQLite backup were reviewed and improved.
+The application is functional for the tested local workflows and the automated suite is green (`21 passed`). The schema contains 47 registered SQLAlchemy tables. Authentication, admin-reviewed password reset, CSRF, role checks, leave approval, safe redirects, employee self-service privacy, soft deactivation, and SQLite backup were reviewed and improved.
 
 Release is **conditional**, not fully production-ready. Browser-level acceptance, responsive screenshots, console/network inspection, migrations, SMTP configuration, and production database persistence remain open or unverified.
 
@@ -13,7 +13,7 @@ Release is **conditional**, not fully production-ready. Browser-level acceptance
 - Flask application factory in `app.py`, SQLAlchemy extension in `extensions.py`, SQLite configuration in `config.py`.
 - Blueprints: authentication, dashboard, employees, departments, leaves, attendance, payroll.
 - Server-rendered Jinja templates with Bootstrap/Icon assets and project CSS/JS.
-- 46 SQLAlchemy tables: department (7), employee (10), leave (8), attendance (8), payroll (8), auth/system (5 including password reset tokens).
+- 47 SQLAlchemy tables: department (7), employee (10), leave (8), attendance (8), payroll (8), auth/system (6 including password reset tokens and admin requests).
 - Local database: `instance/ems.db`; no migration framework was found.
 
 ## Completed fixes in this audit cycle
@@ -36,7 +36,7 @@ Release is **conditional**, not fully production-ready. Browser-level acceptance
 
 1. Add Alembic/Flask-Migrate and a repeatable production migration process.
 2. Move production data to a managed persistent database; SQLite on ephemeral hosting is not a durable deployment design.
-3. Configure SMTP for production password-reset delivery.
+3. Keep password-reset handoff inside approved Administrator channels.
 4. Run the full browser/responsive/accessibility pass with Chrome connected.
 5. Add payroll value allow-lists and broader leave policy/holiday rules.
 

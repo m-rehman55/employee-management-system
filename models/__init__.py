@@ -1,5 +1,5 @@
 """
-models/__init__.py - Registers and exports all 46 SQLAlchemy database models.
+models/__init__.py - Registers and exports all 47 SQLAlchemy database models.
 """
 from extensions import db
 
@@ -69,6 +69,7 @@ from models.auth import (
     Role,
     User,
     PasswordResetToken,
+    PasswordResetRequest,
     AuditLog,
     SystemSetting,
 )
@@ -125,6 +126,7 @@ __all__ = [
     'Role',
     'User',
     'PasswordResetToken',
+    'PasswordResetRequest',
     'AuditLog',
     'SystemSetting',
 ]

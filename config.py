@@ -34,12 +34,6 @@ class Config:
     PERMANENT_SESSION_LIFETIME = 86400  # 24 hours in seconds
     RESET_LINK_LOGGING = APP_ENV != 'production'
     CSRF_ENABLED = True
-    MAIL_SERVER = os.environ.get('MAIL_SERVER')
-    MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
 
 class TestConfig(Config):
     """Configuration for automated test suite."""

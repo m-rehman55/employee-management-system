@@ -107,6 +107,7 @@
                         <li><h6 class="dropdown-header">Signed in as <strong>{{ current_role }}</strong></h6></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}"><i class="bi bi-key me-2"></i>Change Password</a></li>
+                        {% if current_role == 'Administrator' %}<li><a class="dropdown-item" href="{{ url_for('admin.password_resets') }}"><i class="bi bi-shield-lock me-2"></i>Password Reset Requests</a></li>{% endif %}
                         <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</a></li>
                     </ul>
                 </div>

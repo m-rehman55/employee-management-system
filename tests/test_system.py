@@ -23,7 +23,7 @@ from models import (
     Employee, EmployeeProfile,
     LeaveType, LeaveRequest, LeaveBalance,
     WorkShift, AttendanceRecord,
-    PayrollPeriod, PayrollRecord
+    PayrollPeriod, PayrollRecord, PasswordResetRequest
 )
 
 @pytest.fixture
@@ -208,10 +208,17 @@ def test_login_rejects_external_next_redirect(client):
 
 
 def test_password_reset_is_single_use(client, app_instance):
-    """Development reset flow changes the password and rejects token reuse."""
+    """Admin-reviewed reset flow changes the password and rejects token reuse."""
     response = client.post('/forgot-password', data={'identity': 'testadmin'}, follow_redirects=True)
     assert response.status_code == 200
-    match = re.search(rb'/reset-password/([^\s<]+)', response.data)
+    assert b'sent to an administrator' in response.data
+    with app_instance.app_context():
+        request_id = PasswordResetRequest.query.filter_by(status='Pending').first().id
+
+    client.post('/login', data={'username': 'testadmin', 'password': 'adminpass123'}, follow_redirects=True)
+    approved = client.post(f'/admin/password-resets/{request_id}/approve', follow_redirects=True)
+    assert approved.status_code == 200
+    match = re.search(rb'/reset-password/([^\s<]+)', approved.data)
     assert match is not None
     token = match.group(1).decode()
 

@@ -12,7 +12,7 @@
 ## Open risks
 
 - CSRF protection is implemented for state-changing requests; browser forms receive a session token and the server rejects missing/invalid tokens.
-- Login rate limiting, account lockout, MFA, password reset and rotation are not implemented.
+- Login rate limiting, account lockout, MFA and password rotation are not implemented. Password reset is now Administrator-reviewed.
 - Production secret/database configuration needs deployment-specific hardening review.
 - Default seed behavior must not expose or reuse development credentials in production.
 

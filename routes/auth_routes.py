@@ -2,13 +2,12 @@
 routes/auth_routes.py - Authentication and Session Management Blueprint.
 Handles login, logout, session establishment, cookie demonstration, and PRG redirects.
 """
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response
 from extensions import db
-from models.auth import User, PasswordResetToken
+from models.auth import User, PasswordResetRequest, PasswordResetToken
 from utils.audit import log_audit
 from utils.security import safe_local_url
 from utils.time import utc_now
-from utils.mail import send_password_reset_email
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -76,27 +75,14 @@ def forgot_password():
     if request.method == 'POST':
         identity = request.form.get('identity', '').strip()
         user = User.query.filter_by(username=identity).first()
-        if not user:
-            user = User.query.join(User.employee).filter_by(email=identity.lower()).first()
 
         if user and user.is_active:
-            PasswordResetToken.query.filter_by(user_id=user.id, used_at=None).update({'used_at': utc_now()})
-            reset, raw_token = PasswordResetToken.issue(user)
-            db.session.add(reset)
-            db.session.commit()
-            reset_url = url_for('auth.reset_password', token=raw_token, _external=True)
-            recipient = user.employee.email if user.employee else None
-            if recipient:
-                try:
-                    send_password_reset_email(recipient, reset_url)
-                except Exception:
-                    current_app.logger.exception('Password reset email delivery failed')
-            if current_app.config.get('RESET_LINK_LOGGING', True):
-                current_app.logger.info('Password reset link for %s: %s', user.username, reset_url)
-            if current_app.debug or current_app.testing:
-                flash(f'Development reset link: {reset_url}', 'info')
+            pending = PasswordResetRequest.query.filter_by(user_id=user.id, status='Pending').first()
+            if not pending:
+                db.session.add(PasswordResetRequest(user_id=user.id))
+                db.session.commit()
 
-        flash('If the account exists, password reset instructions have been issued.', 'info')
+        flash('If the account exists, a password reset request has been sent to an administrator for review.', 'info')
         return redirect(url_for('auth.forgot_password'))
 
     return render_template('auth/forgot_password.html')

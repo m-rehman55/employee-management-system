@@ -2,7 +2,7 @@
 
 ## Evidence
 
-- `verify_models.py`: **46 tables**, requirement of 40 exceeded.
+- `verify_models.py`: **47 tables**, requirement of 40 exceeded.
 - All categorized tables in Department, Employee, Leave, Attendance, Payroll, and Auth/System groups were found in metadata.
 - Automated persistence and CRUD tests passed.
 
